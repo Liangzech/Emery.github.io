@@ -1,23 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Hello World</title>
-    <url>/posts/4a17b156.html</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+    <title>F5 BIG-IP LTM命令行配置</title>
+    <url>/posts/dbaf3e89.html</url>
+    <content><![CDATA[<p>此文档记录下一些LTM常用的Tmsh操作命令。</p>
 <span id="more"></span>
 
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+<h2 id="配置MGMT"><a href="#配置MGMT" class="headerlink" title="配置MGMT"></a>配置MGMT</h2><ul>
+<li>管理口关闭DHCP</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify sys global-settings mgmt-dhcp disabled</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<ul>
+<li>配置管理地址</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create sys management-ip 10.10.10.2/24</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<ul>
+<li>配置带外网络路由,一般不建议配置默认路由</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create sys management-route MGMT_route network 10.10.11.0/24 gateway 10.10.10.1</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<h2 id="安装license"><a href="#安装license" class="headerlink" title="安装license"></a>安装license</h2><ul>
+<li>安装License</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">install sys license registration-key XXXX-XXXX-XXXX-XXXX-XXXX</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+<ul>
+<li>PS: <em>XXXX-XXXX-XXXX-XXXX-XXXX</em>为License，激活后  <em>(NO LICENSE)</em> 会变为 <em>(Active)</em>,至此激活完成。</li>
+</ul>
+<h2 id="修改系统名称"><a href="#修改系统名称" class="headerlink" title="修改系统名称"></a>修改系统名称</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify sys global-settings hostname node01.f5.com</span><br></pre></td></tr></table></figure>
+
+<h2 id="修改时钟源-x2F-时区"><a href="#修改时钟源-x2F-时区" class="headerlink" title="修改时钟源&#x2F;时区"></a>修改时钟源&#x2F;时区</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify sys ntp servers add &#123; 10.10.10.1 &#125;</span><br><span class="line">modify sys ntp timezone Asia/Shanghai</span><br></pre></td></tr></table></figure>
+
+<h2 id="关闭web图形化引导"><a href="#关闭web图形化引导" class="headerlink" title="关闭web图形化引导"></a>关闭web图形化引导</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify sys global-settings gui-setup disabled</span><br></pre></td></tr></table></figure>
+
+<h2 id="组建HA"><a href="#组建HA" class="headerlink" title="组建HA"></a>组建HA</h2><ul>
+<li>分别在两台设备上创建用作HA的接口的相关配置</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">node01</span><br><span class="line">create net trunk trunk_ha interfaces add &#123; 1.1 1.2 &#125;</span><br><span class="line">create net vlan vlan_ha tag 4094 interfaces add &#123; trunk_ha &#125;</span><br><span class="line">create net self Selfip_HA address 1.1.1.1/30 traffic-group traffic-group-local-only  vlan vlan_ha</span><br><span class="line"></span><br><span class="line">node02</span><br><span class="line">create net trunk trunk_ha interfaces add &#123; 1.1 1.2 &#125;</span><br><span class="line">create net vlan vlan_ha tag 4094 interfaces add &#123; trunk_ha &#125;</span><br><span class="line">create net self Selfip_HA address 1.1.1.2/30 traffic-group traffic-group-local-only  vlan vlan_ha</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>修改设备同步配置所用地址</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">node01</span><br><span class="line">modify cm device node01.com configsync-ip 1.1.1.1 mirror-ip 1.1.1.1 unicast-address &#123; &#123; ip 1.1.1.1 &#125; &#125;</span><br><span class="line"></span><br><span class="line">node02</span><br><span class="line">modify cm device node02.com configsync-ip 1.1.1.2 mirror-ip 1.1.1.2 unicast-address &#123; &#123; ip 1.1.1.2 &#125; &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>添加同步信任设备</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">node01</span><br><span class="line">run cm add-to-trust ca-device device 1.1.1.2 device-name node02.f5.com username admin password &quot;password&quot;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建设备同步组,<em>HA_group</em>为自定义命名</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create cm device-group HA_group auto-sync disabled devices add &#123; node01.f5.com node02.f5.com &#125; type sync-failover</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建流量同步组</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify cm traffic-group traffic-group-1 ha-order &#123; node01.f5.com node02.f5.com &#125;</span><br></pre></td></tr></table></figure>
 ]]></content>
+      <categories>
+        <category>负载均衡</category>
+      </categories>
+      <tags>
+        <tag>F5</tag>
+        <tag>LTM</tag>
+      </tags>
   </entry>
 </search>
