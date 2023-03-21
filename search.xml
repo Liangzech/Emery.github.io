@@ -8,6 +8,8 @@
 
 
 
+
+
 <h2 id="配置MGMT"><a href="#配置MGMT" class="headerlink" title="配置MGMT"></a>配置MGMT</h2><ul>
 <li>管理口关闭DHCP</li>
 </ul>
@@ -174,12 +176,12 @@
 <h2 id="创建VS"><a href="#创建VS" class="headerlink" title="创建VS"></a>创建VS</h2><ul>
 <li>创建IPv4 VS</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm virtual vs_192.168.10.1 source 0.0.0.0/0 destination 192.168.11.1:8080 ip-protocol tcp pool pool_192.168.10.1 profiles add &#123; fastL4 &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm virtual vs_192.168.10.1 source 0.0.0.0/0 destination 192.168.11.1:8080 ip-protocol tcp pool pool_192.168.10.1 profiles add &#123; fastL4 &#125; persist replace-all-with &#123; source_addr &#123; default yes &#125; &#125;</span><br></pre></td></tr></table></figure>
 
 <ul>
 <li>创建IPv6 VS</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm virtual vs_v6_192.168.10.1 source ::/0 destination fd00:1::192:168:11:1:8080 ip-protocol tcp pool v6_pool_192.168.10.1 profiles add &#123; fastL4 &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm virtual vs_v6_192.168.10.1 source ::/0 destination fd00:1::192:168:11:1:8080 ip-protocol tcp pool v6_pool_192.168.10.1 profiles add &#123; fastL4 &#125; persist replace-all-with &#123; source_addr &#123; default yes &#125; &#125;</span><br></pre></td></tr></table></figure>
 
 <ul>
 <li>查看pool</li>
@@ -190,6 +192,49 @@
 <li>创建vs forwarding(承载路由情况下)</li>
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm virtual vs_forwarding source 0.0.0.0/0 destination 0.0.0.0:any ip-forward profiles add &#123; fastL4 &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="路由域方式"><a href="#路由域方式" class="headerlink" title="路由域方式"></a>路由域方式</h2><ul>
+<li>创建路由域并指定vlan</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create net route-domain APP id 1 vlans add &#123; vlan_1000 &#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: APP为自定义名称 id必须为数字</p>
+</blockquote>
+<ul>
+<li>创建静态路由</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create net route 0.0.0.0%1/0 gw 192.168.1.1%1 mtu 1500 </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建Self IP</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create net self Selfip_10.10.10.2 address 10.10.10.2%1/24 vlan vlan_1000 traffic-group traffic-group-local-only allow-service default</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建Floating IP</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create net self Floatingip_10.10.10.1 address 10.10.10.1%1/24 vlan vlan_1000 traffic-group traffic-group-1 allow-service default</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建node</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm node 192.168.10.1%1 address 192.168.10.1%1 monitor icmp</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建pool</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm pool pool_192.168.10.5 members add &#123; 192.168.10.5%1:any &#125; monitor gateway_icmp</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建VS</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm virtual vs_192.168.11.5 source 0.0.0.0%1/0 destination 192.168.11.5%1:any ip-protocol tcp pool pool_192.168.10.5 profiles add &#123; fastL4 &#125; persist replace-all-with &#123; source_addr &#123; default yes &#125; &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建VS fowarding</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create ltm virtual vs_forwarding source 0.0.0.0%1/0 destination 0.0.0.0%1:any ip-forward profiles add &#123; fastL4 &#125;</span><br></pre></td></tr></table></figure>
 
 <h2 id="版本升级"><a href="#版本升级" class="headerlink" title="版本升级"></a>版本升级</h2><ul>
 <li>通过Windows进行镜像上传,在镜像所在目前执行以下命令，前提是Windows开启了SSH</li>
