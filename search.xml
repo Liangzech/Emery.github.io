@@ -281,6 +281,21 @@
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switchboot -b HD1.x</span><br><span class="line">reboot</span><br></pre></td></tr></table></figure>
 
+<h2 id="添加Tacacs认证"><a href="#添加Tacacs认证" class="headerlink" title="添加Tacacs认证"></a>添加Tacacs认证</h2><ul>
+<li>添加tacacs认证服务器</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create auth tacacs system-auth secret 认证密钥 servers add &#123; tacacs server地址 &#125; protocol ip service 49</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>更改认证方式</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify auth source type tacacs fallback true</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>设置远程用户权限并允许登录tmsh</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify auth remote-user default-role admin remote-console-access tmsh</span><br></pre></td></tr></table></figure>
+
 ]]></content>
       <categories>
         <category>负载均衡</category>
