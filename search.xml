@@ -296,6 +296,16 @@
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify auth remote-user default-role admin remote-console-access tmsh</span><br></pre></td></tr></table></figure>
 
+<h2 id="访问控制"><a href="#访问控制" class="headerlink" title="访问控制"></a>访问控制</h2><ul>
+<li>SSH访问控制</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify sys sshd allow add &#123;10.10.10.0/24&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Web访问控制</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">modify sys httpd allow replace-all-with &#123;172.27.0.0/255.255.0.0&#125;</span><br></pre></td></tr></table></figure>
+
 ]]></content>
       <categories>
         <category>负载均衡</category>
@@ -303,6 +313,162 @@
       <tags>
         <tag>F5</tag>
         <tag>LTM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Centos Linux PTP高精度时钟同步</title>
+    <url>/posts/d4bc7142.html</url>
+    <content><![CDATA[<p>Centos7使用ptp4l和phc2sys进行时钟同步时测试步骤以及配置文件，分别使用组播模式和单播模式</p>
+<span id="more"></span>
+
+<h2 id="安装PTP时钟同步软件"><a href="#安装PTP时钟同步软件" class="headerlink" title="安装PTP时钟同步软件"></a>安装PTP时钟同步软件</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install linuxptp</span><br></pre></td></tr></table></figure>
+
+<h2 id="查看网卡是否支持PTP"><a href="#查看网卡是否支持PTP" class="headerlink" title="查看网卡是否支持PTP"></a>查看网卡是否支持PTP</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]# ethtool -T ens192f0</span><br><span class="line">Time stamping parameters for ens192f0:</span><br><span class="line">Capabilities:</span><br><span class="line">        hardware-transmit     (SOF_TIMESTAMPING_TX_HARDWARE)</span><br><span class="line">        software-transmit     (SOF_TIMESTAMPING_TX_SOFTWARE)</span><br><span class="line">        hardware-receive      (SOF_TIMESTAMPING_RX_HARDWARE)</span><br><span class="line">        software-receive      (SOF_TIMESTAMPING_RX_SOFTWARE)</span><br><span class="line">        software-system-clock (SOF_TIMESTAMPING_SOFTWARE)</span><br><span class="line">        hardware-raw-clock    (SOF_TIMESTAMPING_RAW_HARDWARE)</span><br><span class="line">PTP Hardware Clock: 0</span><br><span class="line">Hardware Transmit Timestamp Modes:</span><br><span class="line">        off                   (HWTSTAMP_TX_OFF)</span><br><span class="line">        on                    (HWTSTAMP_TX_ON)</span><br><span class="line">Hardware Receive Filter Modes:</span><br><span class="line">        none                  (HWTSTAMP_FILTER_NONE)</span><br><span class="line">        ptpv1-l4-sync         (HWTSTAMP_FILTER_PTP_V1_L4_SYNC)</span><br><span class="line">        ptpv1-l4-delay-req    (HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ)</span><br><span class="line">        ptpv2-l4-event        (HWTSTAMP_FILTER_PTP_V2_L4_EVENT)</span><br><span class="line">        ptpv2-l4-sync         (HWTSTAMP_FILTER_PTP_V2_L4_SYNC)</span><br><span class="line">        ptpv2-l4-delay-req    (HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ)</span><br><span class="line">        ptpv2-l2-event        (HWTSTAMP_FILTER_PTP_V2_L2_EVENT)</span><br><span class="line">        ptpv2-l2-sync         (HWTSTAMP_FILTER_PTP_V2_L2_SYNC)</span><br><span class="line">        ptpv2-l2-delay-req    (HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ)</span><br><span class="line">        ptpv2-event           (HWTSTAMP_FILTER_PTP_V2_EVENT)</span><br><span class="line">        ptpv2-sync            (HWTSTAMP_FILTER_PTP_V2_SYNC)</span><br><span class="line">        ptpv2-delay-req       (HWTSTAMP_FILTER_PTP_V2_DELAY_REQ)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>参数解释</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="center">解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">SOF_TIMESTAMPING_TX_HARDWARE</td>
+<td align="center">发送硬件时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_TX_SOFTWARE</td>
+<td align="center">发送软件时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_RX_HARDWARE</td>
+<td align="center">接收硬件时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_RX_SOFTWARE</td>
+<td align="center">接收软件时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_SOFTWARE</td>
+<td align="center">返回软件中生成的系统时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_RAW_HARDWARE</td>
+<td align="center">返回原始硬件时间戳</td>
+</tr>
+</tbody></table>
+<h2 id="组播方式进行PTP时间同步"><a href="#组播方式进行PTP时间同步" class="headerlink" title="组播方式进行PTP时间同步"></a>组播方式进行PTP时间同步</h2><ul>
+<li>服务器网卡使用bond mode 1模式PTP同步</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ptp4l -i bond0 -H -s -m</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips:</p>
+<p>-s 指定本地为slave；-m 在控制台输出日志；-H 使用硬件时钟同步</p>
+</blockquote>
+<ul>
+<li>执行上面命令后会有以下回显，说明时钟同步生效</li>
+</ul>
+<blockquote>
+<p>ptp4l[687501.682]: selected &#x2F;dev&#x2F;ptp1 as PTP clock<br>ptp4l[687501.684]: port 1: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[687501.684]: port 0: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[687503.243]: port 1: new foreign master 3c26e4.fffe.7a0aa7-204<br>ptp4l[687506.912]: selected best master clock 448816.fffe.aa778f<br>ptp4l[687506.912]: port 1: LISTENING to UNCALIBRATED on RS_SLAVE<br>ptp4l[687508.289]: port 1: UNCALIBRATED to SLAVE on MASTER_CLOCK_SELECTED<br>ptp4l[687508.520]: rms 2386580 max 3375286 freq  -7781 +&#x2F;- 571 delay   254 +&#x2F;-   0<br>ptp4l[687509.441]: rms  359 max  585 freq  -7623 +&#x2F;- 192<br>ptp4l[687510.362]: rms  177 max  230 freq  -7113 +&#x2F;- 100 delay   256 +&#x2F;-   0<br>ptp4l[687511.279]: rms  229 max  256 freq  -6891 +&#x2F;-  22 delay   258 +&#x2F;-   0</p>
+</blockquote>
+<ul>
+<li>同步到系统时间</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">phc2sys  -m -s /dev/ptp1  -w</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips:</p>
+<p>-s 指定主时钟；-w 等待ptp4l；-m 在控制台输出日志</p>
+</blockquote>
+<ul>
+<li>执行上面命令后会有以下回显，说明系统时间同步成功</li>
+</ul>
+<blockquote>
+<p>phc2sys[689101.632]: CLOCK_REALTIME phc offset 35216869089159 s0 freq +83339959 delay    485<br>phc2sys[689102.633]: CLOCK_REALTIME phc offset 35216778125348 s1 freq   +7835 delay    488<br>phc2sys[689103.633]: CLOCK_REALTIME phc offset   -145774 s2 freq -137939 delay    614<br>phc2sys[689104.634]: CLOCK_REALTIME phc offset      -188 s2 freq  -36085 delay    563<br>phc2sys[689105.634]: CLOCK_REALTIME phc offset     43695 s2 freq   +7741 delay    553<br>phc2sys[689106.634]: CLOCK_REALTIME phc offset     43760 s2 freq  +20915 delay    530<br>phc2sys[689107.634]: CLOCK_REALTIME phc offset     30637 s2 freq  +20920 delay    481<br>phc2sys[689108.635]: CLOCK_REALTIME phc offset     17436 s2 freq  +16910 delay    607<br>phc2sys[689109.635]: CLOCK_REALTIME phc offset      8291 s2 freq  +12996 delay    516<br>phc2sys[689110.635]: CLOCK_REALTIME phc offset      2925 s2 freq  +10117 delay    576<br>phc2sys[689111.635]: CLOCK_REALTIME phc offset       430 s2 freq   +8500 delay    563<br>phc2sys[689112.635]: CLOCK_REALTIME phc offset      -332 s2 freq   +7867 delay    570<br>phc2sys[689113.636]: CLOCK_REALTIME phc offset      -551 s2 freq   +7548 delay    613<br>phc2sys[689114.636]: CLOCK_REALTIME phc offset      -322 s2 freq   +7612 delay    524<br>phc2sys[689115.636]: CLOCK_REALTIME phc offset      -128 s2 freq   +7709 delay    509<br>phc2sys[689116.637]: CLOCK_REALTIME phc offset      -148 s2 freq   +7651 delay    573<br>phc2sys[689117.637]: CLOCK_REALTIME phc offset      -139 s2 freq   +7615 delay    565<br>phc2sys[689118.637]: CLOCK_REALTIME phc offset        56 s2 freq   +7769 delay    524<br>phc2sys[689119.637]: CLOCK_REALTIME phc offset        65 s2 freq   +7794 delay    508<br>phc2sys[689120.638]: CLOCK_REALTIME phc offset        33 s2 freq   +7782 delay    563<br>phc2sys[689121.638]: CLOCK_REALTIME phc offset         2 s2 freq   +7761 delay    593<br>phc2sys[689122.638]: CLOCK_REALTIME phc offset        37 s2 freq   +7796 delay    525</p>
+</blockquote>
+<h2 id="单播模式进行PTP时间同步"><a href="#单播模式进行PTP时间同步" class="headerlink" title="单播模式进行PTP时间同步"></a>单播模式进行PTP时间同步</h2><ul>
+<li>ptp4l配置文件模板</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#</span><br><span class="line"># UNICAST slave example configuration with contrived master tables.</span><br><span class="line"># This example will not work out of the box!</span><br><span class="line">#</span><br><span class="line">[global]</span><br><span class="line">#</span><br><span class="line"># Request service for sixty seconds.</span><br><span class="line">#</span><br><span class="line">unicast_req_duration	60</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table has four possible UDPv4 master clocks.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		1</span><br><span class="line">logQueryInterval	2</span><br><span class="line">UDPv4			192.168.1.11</span><br><span class="line">UDPv4			192.168.2.22</span><br><span class="line">UDPv4			192.168.3.33</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table has just one Layer-2 master clock.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		2</span><br><span class="line">logQueryInterval	2</span><br><span class="line">L2			00:11:22:33:44:55</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table would be for use with the P2P delay mechanism.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		3</span><br><span class="line">logQueryInterval	2</span><br><span class="line">peer_address		192.168.4.44</span><br><span class="line">UDPv4			192.168.4.44</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># eth0 uses the master table with ID 1 over UDPv4.</span><br><span class="line">#</span><br><span class="line">[eth0]</span><br><span class="line">unicast_master_table	1</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># eth1 uses the master table with ID 2 over Layer-2.</span><br><span class="line">#</span><br><span class="line">[eth1]</span><br><span class="line">network_transport	L2</span><br><span class="line">unicast_master_table	2</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: 在只使用单播的情况下，可以把table_id为 2 和 3 的相关参数注释</p>
+</blockquote>
+<ul>
+<li>ptp4l指定配置文件进行时钟同步</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ptp4l -f /etc/ptp4l.conf -H -s -m</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>执行上面命令后会有以下回显，说明时钟同步生效</li>
+</ul>
+<blockquote>
+<p>ptp4l[689972.642]: selected &#x2F;dev&#x2F;ptp1 as PTP clock<br>ptp4l[689972.644]: port 1: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[689972.644]: port 0: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[689973.135]: port 1: new foreign master 3c26e4.fffe.7a0aa7-204<br>ptp4l[689977.471]: selected best master clock 448816.fffe.aa778f<br>ptp4l[689977.471]: port 1: LISTENING to UNCALIBRATED on RS_SLAVE<br>ptp4l[689977.918]: master offset      -4525 s0 freq   -7006 path delay       277<br>ptp4l[689978.190]: master offset      -4510 s2 freq   -6946 path delay       277<br>ptp4l[689978.190]: port 1: UNCALIBRATED to SLAVE on MASTER_CLOCK_SELECTED<br>ptp4l[689978.460]: master offset      -4549 s2 freq  -11495 path delay       277<br>ptp4l[689978.732]: master offset      -3439 s2 freq  -11750 path delay       277<br>ptp4l[689979.005]: master offset      -2246 s2 freq  -11589 path delay       277<br>ptp4l[689979.275]: master offset      -1119 s2 freq  -11135 path delay       277<br>ptp4l[689979.545]: master offset        -89 s2 freq  -10441 path delay       277</p>
+</blockquote>
+<ul>
+<li>通过抓包可以看出PTP是单播模式,使用端口为UDP 320</li>
+</ul>
+<blockquote>
+<p>6	1.693831	192.168.10.100	192.168.10.1	PTPv2	96	Signalling Message</p>
+<p>User Datagram Protocol, Src Port: 320, Dst Port: 320<br>   Source Port: 320<br>   Destination Port: 320<br>   Length: 62<br>   Checksum: 0xc823 [unverified]<br>   [Checksum Status: Unverified]<br>   [Stream index: 3]<br>   [Timestamps]<br>       [Time since first frame: 0.000000000 seconds]<br>       [Time since previous frame: 0.000000000 seconds]<br>   UDP payload (54 bytes)</p>
+</blockquote>
+<h2 id="使用systemctl控制ptp4l与phc2sys"><a href="#使用systemctl控制ptp4l与phc2sys" class="headerlink" title="使用systemctl控制ptp4l与phc2sys"></a>使用systemctl控制ptp4l与phc2sys</h2><h3 id="组播模式示例"><a href="#组播模式示例" class="headerlink" title="组播模式示例"></a>组播模式示例</h3><ul>
+<li>ptp4l启动文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/ptp4l.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Precision Time Protocol (PTP) service</span><br><span class="line">After=network-online.target</span><br><span class="line">Wants=network-online.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/ptp4l</span><br><span class="line">ExecStart=/usr/sbin/ptp4l -i bond0  -H -s -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>phc2sys启动文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/phc2sys.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Synchronize system clock or PTP hardware clock (PHC)</span><br><span class="line">After=ntpdate.service ptp4l.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/phc2sys</span><br><span class="line">ExecStart=/usr/sbin/phc2sys -s /dev/ptp1 -w -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<h3 id="单播模式示例"><a href="#单播模式示例" class="headerlink" title="单播模式示例"></a>单播模式示例</h3><ul>
+<li>ptp4l启动文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/ptp4l.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Precision Time Protocol (PTP) service</span><br><span class="line">After=network-online.target</span><br><span class="line">Wants=network-online.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/ptp4l</span><br><span class="line">ExecStart=/usr/sbin/ptp4l -f/etc/ptp4l.conf  -H -s -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li>phc2sys启动文件与组播模式下配置文件一致</li>
+</ul>
+<h3 id="启动服务及相关检查"><a href="#启动服务及相关检查" class="headerlink" title="启动服务及相关检查"></a>启动服务及相关检查</h3><ul>
+<li>启动服务&amp;开机自启</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl enable ptp4l</span><br><span class="line">systemctl start ptp4l</span><br><span class="line">systemctl enable phc2sys</span><br><span class="line">systemctl start phc2sys</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看软件运行状态</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl status ptp4l</span><br><span class="line">systemctl status phc2sys</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看软件运行日志</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">journalctl -f -u ptp4l</span><br><span class="line">journalctl -f -u phc2sys</span><br><span class="line">或者查看系统日志</span><br><span class="line">tail -f /var/log/messages</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
+]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>PTP</tag>
+        <tag>PTP4l</tag>
+        <tag>phc2sys</tag>
       </tags>
   </entry>
 </search>
