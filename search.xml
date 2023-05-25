@@ -560,82 +560,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Linux组播测试工具之omping</title>
-    <url>/posts/24ef9542.html</url>
-    <content><![CDATA[<p>omping是一个类似ping的工具，不同的是它使用的不用icmp协议，支持同时ping多个地址，支持ASM和SSM。</p>
-<span id="more"></span>
-
-<h2 id="omping安装"><a href="#omping安装" class="headerlink" title="omping安装"></a>omping安装</h2><ul>
-<li>omping可以直接使用yum进行安装（Centos）</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install omping</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>Linux主机需要关闭防火墙和SELinux</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl stop firewalld</span><br><span class="line">setenforce 0</span><br></pre></td></tr></table></figure>
-
-<h2 id="omping使用方法"><a href="#omping使用方法" class="headerlink" title="omping使用方法"></a>omping使用方法</h2><blockquote>
-<p>Tips: omping会同时使用单播和组播ping</p>
-</blockquote>
-<ul>
-<li><p>ASM使用示例</p>
-<ul>
-<li>node01节点</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -m 232.1.1.1 192.168.10.101 192.168.11.101 192.168.12.101 -C</span><br><span class="line"></span><br><span class="line"># -m 指定组播地址 -p 指定端口 -C 显示每个回复消息的连续统计信息 服务器本地地址 node02地址 node03地址以此类推</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>node02节点</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -m 232.1.1.1 192.168.11.101 192.168.10.101 -C</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>node03节点</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -m 232.1.1.1 192.168.12.101 192.168.10.101 -C</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>大致的显示效果如下</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">192.168.10.101 : waiting for response msg</span><br><span class="line">192.168.10.101 : joined (S,G) = (*, 232.1.1.1), pinging</span><br><span class="line"></span><br><span class="line">192.168.10.101 :   unicast, seq=19, size=69 bytes, dist=1, time=0.295ms (0.306 avg, 0% loss)</span><br><span class="line">192.168.10.101 : multicast, seq=19, size=69 bytes, dist=1, time=0.294ms (0.329 avg, 0% loss)</span><br><span class="line">192.168.10.101 :   unicast, seq=20, size=69 bytes, dist=1, time=0.523ms (0.317 avg, 0% loss)</span><br><span class="line">192.168.10.101 : multicast, seq=20, size=69 bytes, dist=1, time=0.550ms (0.341 avg, 0% loss)</span><br><span class="line">^C</span><br><span class="line">192.168.10.101 :   unicast, xmt/rcv/%loss = 20/20/0%, min/avg/max/std-dev = 0.166/0.317/0.523/0.087</span><br><span class="line">192.168.10.101 : multicast, xmt/rcv/%loss = 20/19/5% (seq&gt;=2 0%), min/avg/max/std-dev = 0.229/0.341/0.550/0.084</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>SSM使用示例</p>
-<ul>
-<li>node01节点</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -M ssm -m 232.1.1.1 192.168.10.101 192.168.11.101 192.168.12.101 -C</span><br><span class="line"></span><br><span class="line"># -M 指定SSM -m 指定组播地址 -p 指定端口 -C 显示每个回复消息的连续统计信息 服务器本地地址 node02地址 node03地址以此类推</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>node02节点</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -M ssm -m 232.1.1.1 192.168.11.101 192.168.10.101 -C</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>node03节点</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -M ssm -m 232.1.1.1 192.168.12.101 192.168.10.101 -C</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>大致显示效果如下</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">192.168.10.101 : waiting for response msg</span><br><span class="line">192.168.10.101 : joined (S,G) = (192.168.10.101, 232.1.1.1), pinging</span><br><span class="line">192.168.10.101 :   unicast, seq=1, size=69 bytes, dist=1, time=0.166ms (0.166 avg, 0% loss)</span><br><span class="line">192.168.10.101 :   unicast, seq=2, size=69 bytes, dist=1, time=0.232ms (0.199 avg, 0% loss)</span><br><span class="line">192.168.10.101 : multicast, seq=2, size=69 bytes, dist=1, time=0.237ms (0.237 avg, 0% loss)</span><br><span class="line">192.168.10.101 :   unicast, xmt/rcv/%loss = 20/20/0%, min/avg/max/std-dev = 0.166/0.317/0.523/0.087</span><br><span class="line">192.168.10.101 : multicast, xmt/rcv/%loss = 20/19/5% (seq&gt;=2 0%), min/avg/max/std-dev = 0.229/0.341/0.550/0.084</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h2 id="omping详细参数解释"><a href="#omping详细参数解释" class="headerlink" title="omping详细参数解释"></a>omping详细参数解释</h2><blockquote>
-<p><a href="https://linux.die.net/man/8/omping">https://linux.die.net/man/8/omping</a></p>
-</blockquote>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>组播</category>
-      </categories>
-      <tags>
-        <tag>Multicast</tag>
-        <tag>Linux</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Linux组播测试工具之mcjoin</title>
     <url>/posts/dba36f02.html</url>
     <content><![CDATA[<p>mcjoin是一个简单易用的工具，用于测试IPv4和IPv6组播，包括组播生成器（服务器）和组播数据接收器（客户端），支持加入&#x2F;发送到一个或多个组，支持任意源和源特定组播（ASM (*,G)和SSM (S,G)），支持IPv4和IPv6。</p>
@@ -744,6 +668,223 @@
       <tags>
         <tag>Multicast</tag>
         <tag>Linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Linux组播测试工具之omping</title>
+    <url>/posts/24ef9542.html</url>
+    <content><![CDATA[<p>omping是一个类似ping的工具，不同的是它使用的不用icmp协议，支持同时ping多个地址，支持ASM和SSM。</p>
+<span id="more"></span>
+
+<h2 id="omping安装"><a href="#omping安装" class="headerlink" title="omping安装"></a>omping安装</h2><ul>
+<li>omping可以直接使用yum进行安装（Centos）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install omping</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Linux主机需要关闭防火墙和SELinux</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl stop firewalld</span><br><span class="line">setenforce 0</span><br></pre></td></tr></table></figure>
+
+<h2 id="omping使用方法"><a href="#omping使用方法" class="headerlink" title="omping使用方法"></a>omping使用方法</h2><blockquote>
+<p>Tips: omping会同时使用单播和组播ping</p>
+</blockquote>
+<ul>
+<li><p>ASM使用示例</p>
+<ul>
+<li>node01节点</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -m 232.1.1.1 192.168.10.101 192.168.11.101 192.168.12.101 -C</span><br><span class="line"></span><br><span class="line"># -m 指定组播地址 -p 指定端口 -C 显示每个回复消息的连续统计信息 服务器本地地址 node02地址 node03地址以此类推</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>node02节点</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -m 232.1.1.1 192.168.11.101 192.168.10.101 -C</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>node03节点</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -m 232.1.1.1 192.168.12.101 192.168.10.101 -C</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>大致的显示效果如下</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">192.168.10.101 : waiting for response msg</span><br><span class="line">192.168.10.101 : joined (S,G) = (*, 232.1.1.1), pinging</span><br><span class="line"></span><br><span class="line">192.168.10.101 :   unicast, seq=19, size=69 bytes, dist=1, time=0.295ms (0.306 avg, 0% loss)</span><br><span class="line">192.168.10.101 : multicast, seq=19, size=69 bytes, dist=1, time=0.294ms (0.329 avg, 0% loss)</span><br><span class="line">192.168.10.101 :   unicast, seq=20, size=69 bytes, dist=1, time=0.523ms (0.317 avg, 0% loss)</span><br><span class="line">192.168.10.101 : multicast, seq=20, size=69 bytes, dist=1, time=0.550ms (0.341 avg, 0% loss)</span><br><span class="line">^C</span><br><span class="line">192.168.10.101 :   unicast, xmt/rcv/%loss = 20/20/0%, min/avg/max/std-dev = 0.166/0.317/0.523/0.087</span><br><span class="line">192.168.10.101 : multicast, xmt/rcv/%loss = 20/19/5% (seq&gt;=2 0%), min/avg/max/std-dev = 0.229/0.341/0.550/0.084</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>SSM使用示例</p>
+<ul>
+<li>node01节点</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -M ssm -m 232.1.1.1 192.168.10.101 192.168.11.101 192.168.12.101 -C</span><br><span class="line"></span><br><span class="line"># -M 指定SSM -m 指定组播地址 -p 指定端口 -C 显示每个回复消息的连续统计信息 服务器本地地址 node02地址 node03地址以此类推</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>node02节点</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -M ssm -m 232.1.1.1 192.168.11.101 192.168.10.101 -C</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>node03节点</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">omping -M ssm -m 232.1.1.1 192.168.12.101 192.168.10.101 -C</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>大致显示效果如下</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">192.168.10.101 : waiting for response msg</span><br><span class="line">192.168.10.101 : joined (S,G) = (192.168.10.101, 232.1.1.1), pinging</span><br><span class="line">192.168.10.101 :   unicast, seq=1, size=69 bytes, dist=1, time=0.166ms (0.166 avg, 0% loss)</span><br><span class="line">192.168.10.101 :   unicast, seq=2, size=69 bytes, dist=1, time=0.232ms (0.199 avg, 0% loss)</span><br><span class="line">192.168.10.101 : multicast, seq=2, size=69 bytes, dist=1, time=0.237ms (0.237 avg, 0% loss)</span><br><span class="line">192.168.10.101 :   unicast, xmt/rcv/%loss = 20/20/0%, min/avg/max/std-dev = 0.166/0.317/0.523/0.087</span><br><span class="line">192.168.10.101 : multicast, xmt/rcv/%loss = 20/19/5% (seq&gt;=2 0%), min/avg/max/std-dev = 0.229/0.341/0.550/0.084</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="omping详细参数解释"><a href="#omping详细参数解释" class="headerlink" title="omping详细参数解释"></a>omping详细参数解释</h2><blockquote>
+<p><a href="https://linux.die.net/man/8/omping">https://linux.die.net/man/8/omping</a></p>
+</blockquote>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>组播</category>
+      </categories>
+      <tags>
+        <tag>Multicast</tag>
+        <tag>Linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Cisco Nexus Telemetry监控的简单实现</title>
+    <url>/posts/b86ffcc3.html</url>
+    <content><![CDATA[<p>Telemetry是一种实时监控和收集网络设备状态数据的技术，它可以提供更精细、更准确的网络性能数据，以帮助网络管理员更好地管理和维护网络。为此记录一下简单的实现方式。</p>
+<span id="more"></span>
+
+<h2 id="InfluxDB安装"><a href="#InfluxDB安装" class="headerlink" title="InfluxDB安装"></a>InfluxDB安装</h2><h3 id="RPM包安装方式"><a href="#RPM包安装方式" class="headerlink" title="RPM包安装方式"></a>RPM包安装方式</h3><ul>
+<li>下载InfluxDB RPM包</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://dl.influxdata.com/influxdb/releases/influxdb2-2.7.0.x86_64.rpm</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>yum本地安装</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y localinstall influxdb2-2.7.0.x86_64.rpm</span><br></pre></td></tr></table></figure>
+
+<h3 id="yum在线安装方式"><a href="#yum在线安装方式" class="headerlink" title="yum在线安装方式"></a>yum在线安装方式</h3><ul>
+<li>添加软件源</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat &lt;&lt;EOF | sudo tee /etc/yum.repos.d/influxdb.repo</span><br><span class="line">[influxdb]</span><br><span class="line">name = InfluxData Repository - Stable</span><br><span class="line">baseurl = https://repos.influxdata.com/stable/\$basearch/main</span><br><span class="line">enabled = 1</span><br><span class="line">gpgcheck = 1</span><br><span class="line">gpgkey = https://repos.influxdata.com/influxdata-archive_compat.key</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>yum安装influxdb</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install influxdb2</span><br></pre></td></tr></table></figure>
+
+<h3 id="influxdb相关设置"><a href="#influxdb相关设置" class="headerlink" title="influxdb相关设置"></a>influxdb相关设置</h3><ul>
+<li>安装influxdb客户端压缩包</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://dl.influxdata.com/influxdb/releases/influxdb2-client-2.7.3-linux-amd64.tar.gz</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>解压tar包,并拷贝到指定路径</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">tar -zxvf influxdb2-client-2.7.3-linux-amd64.tar.gz</span><br><span class="line">cp influx /usr/local/bin/</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>启动influxdb设置开机自启</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start influxdb</span><br><span class="line">systemctl enable influxdb</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>命令行初始化安装</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">influx setup --username admin --password admin123 --org telemetry --bucket NXOS --force</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看Token</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">influx auth list</span><br></pre></td></tr></table></figure>
+
+<h2 id="Telegraf安装"><a href="#Telegraf安装" class="headerlink" title="Telegraf安装"></a>Telegraf安装</h2><ul>
+<li>添加软件源</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat &lt;&lt;EOF | sudo tee /etc/yum.repos.d/influxdb.repo</span><br><span class="line">[influxdb]</span><br><span class="line">name = InfluxData Repository - Stable</span><br><span class="line">baseurl = https://repos.influxdata.com/stable/\$basearch/main</span><br><span class="line">enabled = 1</span><br><span class="line">gpgcheck = 1</span><br><span class="line">gpgkey = https://repos.influxdata.com/influxdata-archive_compat.key</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>yum安装telegraf</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install telegraf</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>备份原配置文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mv telegraf.conf telegraf.conf.bak</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>编写新的配置文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /etc/telegraf/telegraf.conf</span><br><span class="line"></span><br><span class="line"># minimum configuration example of telegraf</span><br><span class="line"># Full example please refer to command telegraf config</span><br><span class="line">#</span><br><span class="line">[agent]</span><br><span class="line">logtarget = &quot;file&quot;</span><br><span class="line">logfile = &quot;/var/log/telegraf/telegraf.log&quot;</span><br><span class="line">debug = true</span><br><span class="line">hostname = &quot;telegraf&quot;</span><br><span class="line">interval = &quot;10s&quot;</span><br><span class="line">round_interval = false</span><br><span class="line">metric_batch_size = 1000</span><br><span class="line">metric_buffer_limit = 10000</span><br><span class="line"></span><br><span class="line">[[inputs.cisco_telemetry_mdt]]</span><br><span class="line">transport = &quot;grpc&quot;</span><br><span class="line">service_address = &quot;:57001&quot;</span><br><span class="line"></span><br><span class="line">[[outputs.influxdb_v2]]</span><br><span class="line">urls = [&quot;http://influxdb地址:8086&quot;]</span><br><span class="line">token = &quot;influxDB中的Token&quot;</span><br><span class="line">organization = &quot;telemetry&quot;</span><br><span class="line">bucket = &quot;NXOS&quot;</span><br><span class="line"></span><br><span class="line">[[outputs.file]]</span><br><span class="line">## Files to write to, &quot;stdout&quot; is a specially handled file.</span><br><span class="line">files = [&quot;/tmp/metrics.out&quot;]</span><br><span class="line">rotation_max_archives = 3</span><br><span class="line">rotation_max_size = &quot;100MB&quot;</span><br><span class="line">data_format = &quot;json&quot;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>启动telegraf并设置开机自启</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start telegraf</span><br><span class="line">systemctl enable telegraf</span><br></pre></td></tr></table></figure>
+
+<h2 id="创建DBRP的映射"><a href="#创建DBRP的映射" class="headerlink" title="创建DBRP的映射"></a>创建DBRP的映射</h2><ul>
+<li>因在grafana中需要使用InfluxQL语法查询，所以需要创建dbrp映射，目前influxdb默认influx语法。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">influx v1 dbrp create --db NXOS --org telemetry --bucket-id e52d17e4ab919ffb --rp nxos --token token的值</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>bucket-id可以使用以下命令查看</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">influx bucket list</span><br></pre></td></tr></table></figure>
+
+<h2 id="Grafana安装"><a href="#Grafana安装" class="headerlink" title="Grafana安装"></a>Grafana安装</h2><ul>
+<li>安装grafana-server</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install grafana-server</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>设置data source为InfluxDB</p>
+<ul>
+<li><code>Name</code> ：自定义名称</li>
+<li><code>Query Language</code> ： 选择InfluxQL</li>
+<li><code>url</code> ：为influxdb的地址</li>
+<li><code>Custom HTTP Headers</code>点击<code>+ Add hearder</code> ：<code>Hearder</code>值填入Authorition,<code>Value</code>值填入下面格式：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Token influxdb中的token  //注意Token与influxdb的token值一定要有空格</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>Database</code> ：influxdb中的数据库名称</li>
+<li><code>User</code> ： admin &#x2F;&#x2F;创建用户名</li>
+<li><code>Password</code> ：password &#x2F;&#x2F;创建的密码</li>
+<li><code>HTTP Method</code> : 选择GET</li>
+<li>点击<code>Save &amp; test</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="NXOS交换机配置示例"><a href="#NXOS交换机配置示例" class="headerlink" title="NXOS交换机配置示例"></a>NXOS交换机配置示例</h2><ul>
+<li>这里以N9K为例，比如想监控一个接的5s的值：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">feature telemetry</span><br><span class="line"></span><br><span class="line">telemetry</span><br><span class="line">  destination-profile</span><br><span class="line">    use-vrf default</span><br><span class="line">  destination-group telegraf</span><br><span class="line">    ip address 192.168.11.101 port 57001 protocol gRPC encoding GPB</span><br><span class="line">  sensor-group 1</span><br><span class="line">    data-source NX-API</span><br><span class="line">    path &quot;show inter eth1/50&quot;</span><br><span class="line">  subscription 1</span><br><span class="line">    dst-grp telegraf</span><br><span class="line">    snsr-grp 1 sample-interval 1000 //sample-interval单位为毫秒</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>因为使用的是data-source使用的NX-API的方式,并且需要每5s的值，需要在接口下配置</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">interface Ethernet1/50</span><br><span class="line">  load-interval counter 1 5</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>最终grafana效果图</li>
+</ul>
+<p><img data-src="https://vkali-1303828639.cos.ap-hongkong.myqcloud.com/2023/grafana-telemetry.png" alt="telemetry"></p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><blockquote>
+<p><a href="https://github.com/dsx1123/telemetry_collector">https://github.com/dsx1123/telemetry_collector</a></p>
+<p><a href="https://docs.influxdata.com/influxdb/v2.7">https://docs.influxdata.com/influxdb/v2.7</a></p>
+<p><a href="https://github.com/influxdata/telegraf">https://github.com/influxdata/telegraf</a></p>
+<p><a href="https://github.com/influxdata/telegraf/blob/master/docs/CONFIGURATION.md">https://github.com/influxdata/telegraf/blob/master/docs/CONFIGURATION.md</a></p>
+<p><a href="https://developer.cisco.com/site/nxapi-dme-model-reference-api/">https://developer.cisco.com/site/nxapi-dme-model-reference-api/</a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Telemetry</category>
+      </categories>
+      <tags>
+        <tag>Telemetry</tag>
+        <tag>InfluxDB</tag>
+        <tag>Telegraf</tag>
       </tags>
   </entry>
   <entry>
