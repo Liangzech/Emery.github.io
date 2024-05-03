@@ -1,6 +1,205 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Linux组播测试工具之mcjoin</title>
+    <url>/posts/dba36f02.html</url>
+    <content><![CDATA[<p>mcjoin是一个简单易用的工具，用于测试IPv4和IPv6组播，包括组播生成器（服务器）和组播数据接收器（客户端），支持加入&#x2F;发送到一个或多个组，支持任意源和源特定组播（ASM (*,G)和SSM (S,G)），支持IPv4和IPv6。</p>
+<span id="more"></span>
+
+<h2 id="mcjoin下载链接"><a href="#mcjoin下载链接" class="headerlink" title="mcjoin下载链接"></a>mcjoin下载链接</h2><ul>
+<li>首先需要从GitHub上面下载tar包。下载连接：</li>
+</ul>
+<blockquote>
+<p><a href="https://github.com/troglobit/mcjoin/releases/download/v2.11/mcjoin-2.11.tar.gz">https://github.com/troglobit/mcjoin/releases/download/v2.11/mcjoin-2.11.tar.gz</a></p>
+</blockquote>
+<h2 id="mcjoin安装"><a href="#mcjoin安装" class="headerlink" title="mcjoin安装"></a>mcjoin安装</h2><ul>
+<li>以Rocky Linux为例，安装必要软件：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install net-tools vim wget gcc gcc-c++</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>关闭SELinux以及卸载防火墙</li>
+</ul>
+<figure class="highlight diff"><table><tr><td class="code"><pre><span class="line">yum -y remove firewalld</span><br><span class="line"></span><br><span class="line">vim /etc/selinux/config</span><br><span class="line"></span><br><span class="line"><span class="deletion">- SELINUX=enforcing</span></span><br><span class="line"><span class="addition">+ SELINUX=disabled</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>下载mcjoin的tar包</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://github.com/troglobit/mcjoin/releases/download/v2.11/mcjoin-2.11.tar.gz</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>将tar包解压缩</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">tar -zxvf mcjoin-2.11.tar.gz</span><br><span class="line">mv mcjoin-2.11 mcjoin</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>编译安装</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd mcjoin</span><br><span class="line">./configure --prefix=/usr</span><br><span class="line">make -j5</span><br><span class="line">make install-strip</span><br></pre></td></tr></table></figure>
+
+<h2 id="mcjoin使用方法"><a href="#mcjoin使用方法" class="headerlink" title="mcjoin使用方法"></a>mcjoin使用方法</h2><ul>
+<li>Linux查看IGMP版本,默认是v3。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /proc/net/igmp</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果需要修改指定网卡v2，需要执行以下命令</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sysctl -w net.ipv4.conf.eth0.force_igmp_version=2</span><br><span class="line">sysctl -p</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>常用参数</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-b BYTES IP/UDP头部后的负载大小（42字节），默认为100</span><br><span class="line">-c COUNT 发送/接收COUNT个数据包后停止（每个组）</span><br><span class="line">-d 以守护进程方式在后台运行，输出除进度外的信息到syslog</span><br><span class="line">-f MSEC 频率，每MSEC毫秒轮询/发送一次，默认为100</span><br><span class="line">-h 显示帮助文本</span><br><span class="line">-i IFACE 用于发送/接收组播的接口，默认为ens34</span><br><span class="line">-j 加入组，除非作为发送方，默认为加入组</span><br><span class="line">-l LEVEL 设置日志级别；none、notice*、debug</span><br><span class="line">-o 旧版（普通）输出，没有花哨的进度条</span><br><span class="line">-p PORT 发送/接收UDP数据包的端口号，也可以为每个组定义自定义端口（见上文），默认为1234</span><br><span class="line">-s 作为发送方，向选择的组发送数据包，默认为否</span><br><span class="line">-t TTL 发送组播数据包时使用的TTL，默认为1</span><br><span class="line">-v 显示程序版本</span><br><span class="line">-w SEC 打开套接字之前的初始等待时间</span><br><span class="line">-W SEC 在mcjoin退出之前的超时时间（秒）</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>ASM使用示例</p>
+<ul>
+<li>服务端（组播源）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -s -i eth0 232.43.211.234 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>客户端（组播成员）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -i eth0 232.43.211.234 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: </p>
+<p> -s 作为服务端 -i 指定网口 -t 指定跳数为2 -p 指定端口</p>
+</blockquote>
+</li>
+<li><p>SSM使用示例</p>
+<ul>
+<li>服务端（组播源）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -s -i eth0 192.168.10.100,232.43.211.234 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>客户端（组播成员）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -i eth0 192.168.10.100,232.43.211.234 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>ASM与SSM同时测试</p>
+<ul>
+<li>服务端（组播源）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -s -i eth0 192.168.10.100,232.43.211.234 232.1.1.1 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>客户端（组播成员）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -i eth0 192.168.10.100,232.43.211.234 232.1.1.1 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>同时发起多个</p>
+<ul>
+<li>服务端（组播源）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -s -i eth0 192.168.10.100,232.43.211.234+5 232.1.1.1 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>客户端（组播成员）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -i eth0 192.168.10.100,232.43.211.234+5 232.1.1.1 -t 2 -p 4321</span><br></pre></td></tr></table></figure></li>
+</ul>
+]]></content>
+      <categories>
+        <category>组播</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>Multicast</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Cisco Nexus交换机配置组播笔记</title>
+    <url>/posts/3be22a3f.html</url>
+    <content><![CDATA[<p>记录一下Nexus交换机配置ASM和SSM组播配置</p>
+<span id="more"></span>
+
+<h2 id="Nexus交换机配置ASM"><a href="#Nexus交换机配置ASM" class="headerlink" title="Nexus交换机配置ASM"></a>Nexus交换机配置ASM</h2><ul>
+<li>Nexus交换机默认开启igmp snooping。</li>
+<li>启用pim</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# feature pim</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>在组播源和组播成员网关做以下配置</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: Cisco NX-OS does not support PIM dense mode</p>
+</blockquote>
+<ul>
+<li>组播流量可能经过的，所有网络设备的三层接口，启用pim</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface eth1/20</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>当组播接收端的网关，有运行HSRP或者VRRP协议这类协议时，pim协议需要选举一个DR的角色，需要和VRRP的主在同一台设备上。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim dr-priority xx//值越大，优先级越高，若优先级相同则地址值越大的为DR</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>手工指定RP</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# ip pim rp-address xx.xx.xx.xx</span><br></pre></td></tr></table></figure>
+
+<h2 id="Nexus交换机配置SSM"><a href="#Nexus交换机配置SSM" class="headerlink" title="Nexus交换机配置SSM"></a>Nexus交换机配置SSM</h2><ul>
+<li>Nexus交换机默认开启igmp snooping。</li>
+<li>启用pim</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# feature pim</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>在组播源和组播成员网关做以下配置，静态加组（组播源服务器所在vlan不用）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br><span class="line">switch01(config-if)# ip igmp static-oif 232.1.1.1 source 192.168.10.101</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: Cisco NX-OS does not support PIM dense mode</p>
+</blockquote>
+<ul>
+<li>组播流量可能经过的，所有网络设备的三层接口，静态加组，启用pim</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface eth1/20</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br><span class="line">switch01(config-if)# ip igmp static-oif 232.1.1.1 source 192.168.10.101</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>当组播接收端的网关，有运行HSRP或者VRRP协议这类协议时，pim协议需要选举一个DR的角色，需要和VRRP的主在同一台设备上。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim dr-priority xx//值越大，优先级越高，若优先级相同则地址值越大的为DR</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>限制SSM组播地址范围</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# ip pim ssm range xxx</span><br></pre></td></tr></table></figure>
+
+<h2 id="常见组播查看命令"><a href="#常见组播查看命令" class="headerlink" title="常见组播查看命令"></a>常见组播查看命令</h2><ul>
+<li>查看组播路由表</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show ip mroute</span><br><span class="line">show ip mroute detail</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看组播二层转发表</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show ip igmp snooping mrouter</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看当前启用的查询器的IP地址、查询间隔和查询计时器等信息</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show ip igmp snooping querier</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>组播</category>
+      </categories>
+      <tags>
+        <tag>Multicast</tag>
+        <tag>Nexus</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Centos Linux PTP高精度时钟同步</title>
     <url>/posts/d4bc7142.html</url>
     <content><![CDATA[<p>Centos7使用ptp4l和phc2sys进行时钟同步时测试步骤以及配置文件，分别使用组播模式和单播模式</p>
@@ -154,94 +353,6 @@
         <tag>PTP</tag>
         <tag>PTP4l</tag>
         <tag>phc2sys</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Cisco Nexus交换机配置组播笔记</title>
-    <url>/posts/3be22a3f.html</url>
-    <content><![CDATA[<p>记录一下Nexus交换机配置ASM和SSM组播配置</p>
-<span id="more"></span>
-
-<h2 id="Nexus交换机配置ASM"><a href="#Nexus交换机配置ASM" class="headerlink" title="Nexus交换机配置ASM"></a>Nexus交换机配置ASM</h2><ul>
-<li>Nexus交换机默认开启igmp snooping。</li>
-<li>启用pim</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# feature pim</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>在组播源和组播成员网关做以下配置</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips: Cisco NX-OS does not support PIM dense mode</p>
-</blockquote>
-<ul>
-<li>组播流量可能经过的，所有网络设备的三层接口，启用pim</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface eth1/20</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>当组播接收端的网关，有运行HSRP或者VRRP协议这类协议时，pim协议需要选举一个DR的角色，需要和VRRP的主在同一台设备上。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim dr-priority xx//值越大，优先级越高，若优先级相同则地址值越大的为DR</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>手工指定RP</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# ip pim rp-address xx.xx.xx.xx</span><br></pre></td></tr></table></figure>
-
-<h2 id="Nexus交换机配置SSM"><a href="#Nexus交换机配置SSM" class="headerlink" title="Nexus交换机配置SSM"></a>Nexus交换机配置SSM</h2><ul>
-<li>Nexus交换机默认开启igmp snooping。</li>
-<li>启用pim</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# feature pim</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>在组播源和组播成员网关做以下配置，静态加组（组播源服务器所在vlan不用）</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br><span class="line">switch01(config-if)# ip igmp static-oif 232.1.1.1 source 192.168.10.101</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips: Cisco NX-OS does not support PIM dense mode</p>
-</blockquote>
-<ul>
-<li>组播流量可能经过的，所有网络设备的三层接口，静态加组，启用pim</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface eth1/20</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br><span class="line">switch01(config-if)# ip igmp static-oif 232.1.1.1 source 192.168.10.101</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>当组播接收端的网关，有运行HSRP或者VRRP协议这类协议时，pim协议需要选举一个DR的角色，需要和VRRP的主在同一台设备上。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim dr-priority xx//值越大，优先级越高，若优先级相同则地址值越大的为DR</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>限制SSM组播地址范围</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">switch01(config)# ip pim ssm range xxx</span><br></pre></td></tr></table></figure>
-
-<h2 id="常见组播查看命令"><a href="#常见组播查看命令" class="headerlink" title="常见组播查看命令"></a>常见组播查看命令</h2><ul>
-<li>查看组播路由表</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show ip mroute</span><br><span class="line">show ip mroute detail</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看组播二层转发表</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show ip igmp snooping mrouter</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看当前启用的查询器的IP地址、查询间隔和查询计时器等信息</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show ip igmp snooping querier</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>组播</category>
-      </categories>
-      <tags>
-        <tag>Nexus</tag>
-        <tag>Multicast</tag>
       </tags>
   </entry>
   <entry>
@@ -560,114 +671,98 @@
       </tags>
   </entry>
   <entry>
-    <title>Linux组播测试工具之mcjoin</title>
-    <url>/posts/dba36f02.html</url>
-    <content><![CDATA[<p>mcjoin是一个简单易用的工具，用于测试IPv4和IPv6组播，包括组播生成器（服务器）和组播数据接收器（客户端），支持加入&#x2F;发送到一个或多个组，支持任意源和源特定组播（ASM (*,G)和SSM (S,G)），支持IPv4和IPv6。</p>
+    <title>Zerotier自建moon教程</title>
+    <url>/posts/889fbe9b.html</url>
+    <content><![CDATA[<p>Zerotier官方服务器都在国外，使用起来特别卡，又想使用这种可以局域网直接访问私网地址的方式，因此考虑自建moon节点。</p>
 <span id="more"></span>
 
-<h2 id="mcjoin下载链接"><a href="#mcjoin下载链接" class="headerlink" title="mcjoin下载链接"></a>mcjoin下载链接</h2><ul>
-<li>首先需要从GitHub上面下载tar包。下载连接：</li>
+<h2 id="VPS设置"><a href="#VPS设置" class="headerlink" title="VPS设置"></a>VPS设置</h2><ul>
+<li>安装zeroiter</li>
 </ul>
-<blockquote>
-<p><a href="https://github.com/troglobit/mcjoin/releases/download/v2.11/mcjoin-2.11.tar.gz">https://github.com/troglobit/mcjoin/releases/download/v2.11/mcjoin-2.11.tar.gz</a></p>
-</blockquote>
-<h2 id="mcjoin安装"><a href="#mcjoin安装" class="headerlink" title="mcjoin安装"></a>mcjoin安装</h2><ul>
-<li>以Rocky Linux为例，安装必要软件：</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install net-tools vim wget gcc gcc-c++</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -s https://install.zerotier.com | sudo bash</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>关闭SELinux以及卸载防火墙</li>
+<li>启动服务、查看服务运行状态并设置开启自启</li>
 </ul>
-<figure class="highlight diff"><table><tr><td class="code"><pre><span class="line">yum -y remove firewalld</span><br><span class="line"></span><br><span class="line">vim /etc/selinux/config</span><br><span class="line"></span><br><span class="line"><span class="deletion">- SELINUX=enforcing</span></span><br><span class="line"><span class="addition">+ SELINUX=disabled</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start zerotier-one</span><br><span class="line">systemctl status zerotier-one</span><br><span class="line">systemctl enable zerotier-one</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>下载mcjoin的tar包</li>
+<li>加入zerotier网络</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://github.com/troglobit/mcjoin/releases/download/v2.11/mcjoin-2.11.tar.gz</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli join zerotier网站中的ID</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>将tar包解压缩</li>
+<li>生成moon.json模板</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">tar -zxvf mcjoin-2.11.tar.gz</span><br><span class="line">mv mcjoin-2.11 mcjoin</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/lib/zerotier-one/</span><br><span class="line"></span><br><span class="line">zerotier-idtool initmoon identity.public &gt; moon.json</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>编译安装</li>
+<li>修改moon.json配置文件</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd mcjoin</span><br><span class="line">./configure --prefix=/usr</span><br><span class="line">make -j5</span><br><span class="line">make install-strip</span><br></pre></td></tr></table></figure>
-
-<h2 id="mcjoin使用方法"><a href="#mcjoin使用方法" class="headerlink" title="mcjoin使用方法"></a>mcjoin使用方法</h2><ul>
-<li>Linux查看IGMP版本,默认是v3。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cat /proc/net/igmp</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim moon.json</span><br><span class="line"></span><br><span class="line">找到以下字段 </span><br><span class="line">&quot;stableEndpoints&quot;: [ &quot;你的VPS公网地址/9993&quot; ]</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>如果需要修改指定网卡v2，需要执行以下命令</li>
+<li>生成签名文件</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sysctl -w net.ipv4.conf.eth0.force_igmp_version=2</span><br><span class="line">sysctl -p</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-idtool genmoon moon.json</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>常用参数</li>
+<li>创建存放目录</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-b BYTES IP/UDP头部后的负载大小（42字节），默认为100</span><br><span class="line">-c COUNT 发送/接收COUNT个数据包后停止（每个组）</span><br><span class="line">-d 以守护进程方式在后台运行，输出除进度外的信息到syslog</span><br><span class="line">-f MSEC 频率，每MSEC毫秒轮询/发送一次，默认为100</span><br><span class="line">-h 显示帮助文本</span><br><span class="line">-i IFACE 用于发送/接收组播的接口，默认为ens34</span><br><span class="line">-j 加入组，除非作为发送方，默认为加入组</span><br><span class="line">-l LEVEL 设置日志级别；none、notice*、debug</span><br><span class="line">-o 旧版（普通）输出，没有花哨的进度条</span><br><span class="line">-p PORT 发送/接收UDP数据包的端口号，也可以为每个组定义自定义端口（见上文），默认为1234</span><br><span class="line">-s 作为发送方，向选择的组发送数据包，默认为否</span><br><span class="line">-t TTL 发送组播数据包时使用的TTL，默认为1</span><br><span class="line">-v 显示程序版本</span><br><span class="line">-w SEC 打开套接字之前的初始等待时间</span><br><span class="line">-W SEC 在mcjoin退出之前的超时时间（秒）</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mkdir moons.d</span><br><span class="line">把签名文件移动至新建目录</span><br><span class="line">mv 000000xxxx.moon moons.d/</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li><p>ASM使用示例</p>
-<ul>
-<li>服务端（组播源）</li>
+<li>重启服务</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -s -i eth0 232.43.211.234 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>客户端（组播成员）</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -i eth0 232.43.211.234 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl restart zerotier-one</span><br></pre></td></tr></table></figure>
 
 <blockquote>
-<p>Tips: </p>
-<p> -s 作为服务端 -i 指定网口 -t 指定跳数为2 -p 指定端口</p>
+<p>Tips: 防火墙需要放通TCP&#x2F;UDP的9993端口</p>
 </blockquote>
-</li>
-<li><p>SSM使用示例</p>
-<ul>
-<li>服务端（组播源）</li>
+<h2 id="客户端设置"><a href="#客户端设置" class="headerlink" title="客户端设置"></a>客户端设置</h2><ul>
+<li>Windows power shell管理员权限执行以下命令</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -s -i eth0 192.168.10.100,232.43.211.234 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli.bat orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>客户端（组播成员）</li>
+<li>查看是否成功</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -i eth0 192.168.10.100,232.43.211.234 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>ASM与SSM同时测试</p>
-<ul>
-<li>服务端（组播源）</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -s -i eth0 192.168.10.100,232.43.211.234 232.1.1.1 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli.bat listpeers</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>客户端（组播成员）</li>
+<li>Linux</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -i eth0 192.168.10.100,232.43.211.234 232.1.1.1 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>同时发起多个</p>
-<ul>
-<li>服务端（组播源）</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -s -i eth0 192.168.10.100,232.43.211.234+5 232.1.1.1 -t 2 -p 4321</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>客户端（组播成员）</li>
+<li>查看是否成功</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mcjoin -i eth0 192.168.10.100,232.43.211.234+5 232.1.1.1 -t 2 -p 4321</span><br></pre></td></tr></table></figure></li>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli listpeers</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: 加入成功的话会显示节点列表中有自己的VPS地址的moon节点</p>
+</blockquote>
+<h2 id="Openwrt"><a href="#Openwrt" class="headerlink" title="Openwrt"></a>Openwrt</h2><ul>
+<li>在zerotier页面开启，并打开NAT，命令行执行命令</li>
 </ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>在VPS上添加openwrt路由器的私网路由,gw之后的地址为openwrt在zerotier中获得的地址。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">route add -net x.x.x.x/x gw x.x.x.x</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>VPS开启路由转发</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sysctl -w net.ipv4.ip_forward=1</span><br></pre></td></tr></table></figure>
+
 ]]></content>
       <categories>
-        <category>组播</category>
+        <category>Linux</category>
       </categories>
       <tags>
-        <tag>Multicast</tag>
-        <tag>Linux</tag>
+        <tag>Zerotier</tag>
       </tags>
   </entry>
   <entry>
@@ -742,8 +837,8 @@
         <category>组播</category>
       </categories>
       <tags>
-        <tag>Multicast</tag>
         <tag>Linux</tag>
+        <tag>Multicast</tag>
       </tags>
   </entry>
   <entry>
@@ -885,101 +980,6 @@
         <tag>Telemetry</tag>
         <tag>InfluxDB</tag>
         <tag>Telegraf</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Zerotier自建moon教程</title>
-    <url>/posts/889fbe9b.html</url>
-    <content><![CDATA[<p>Zerotier官方服务器都在国外，使用起来特别卡，又想使用这种可以局域网直接访问私网地址的方式，因此考虑自建moon节点。</p>
-<span id="more"></span>
-
-<h2 id="VPS设置"><a href="#VPS设置" class="headerlink" title="VPS设置"></a>VPS设置</h2><ul>
-<li>安装zeroiter</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -s https://install.zerotier.com | sudo bash</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>启动服务、查看服务运行状态并设置开启自启</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start zerotier-one</span><br><span class="line">systemctl status zerotier-one</span><br><span class="line">systemctl enable zerotier-one</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>加入zerotier网络</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli join zerotier网站中的ID</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>生成moon.json模板</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/lib/zerotier-one/</span><br><span class="line"></span><br><span class="line">zerotier-idtool initmoon identity.public &gt; moon.json</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>修改moon.json配置文件</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim moon.json</span><br><span class="line"></span><br><span class="line">找到以下字段 </span><br><span class="line">&quot;stableEndpoints&quot;: [ &quot;你的VPS公网地址/9993&quot; ]</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>生成签名文件</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-idtool genmoon moon.json</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>创建存放目录</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mkdir moons.d</span><br><span class="line">把签名文件移动至新建目录</span><br><span class="line">mv 000000xxxx.moon moons.d/</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>重启服务</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl restart zerotier-one</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips: 防火墙需要放通TCP&#x2F;UDP的9993端口</p>
-</blockquote>
-<h2 id="客户端设置"><a href="#客户端设置" class="headerlink" title="客户端设置"></a>客户端设置</h2><ul>
-<li>Windows power shell管理员权限执行以下命令</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli.bat orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看是否成功</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli.bat listpeers</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>Linux</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看是否成功</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli listpeers</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips: 加入成功的话会显示节点列表中有自己的VPS地址的moon节点</p>
-</blockquote>
-<h2 id="Openwrt"><a href="#Openwrt" class="headerlink" title="Openwrt"></a>Openwrt</h2><ul>
-<li>在zerotier页面开启，并打开NAT，命令行执行命令</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>在VPS上添加openwrt路由器的私网路由,gw之后的地址为openwrt在zerotier中获得的地址。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">route add -net x.x.x.x/x gw x.x.x.x</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>VPS开启路由转发</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sysctl -w net.ipv4.ip_forward=1</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>Linux</category>
-      </categories>
-      <tags>
-        <tag>Zerotier</tag>
       </tags>
   </entry>
 </search>
