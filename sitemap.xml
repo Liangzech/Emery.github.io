@@ -119,7 +119,7 @@
 
   
   <url>
-    <loc>https://blog.vkali.com/tags/Linux/</loc>
+    <loc>https://blog.vkali.com/tags/Nexus/</loc>
     <lastmod>2024-05-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -133,7 +133,14 @@
   </url>
   
   <url>
-    <loc>https://blog.vkali.com/tags/Nexus/</loc>
+    <loc>https://blog.vkali.com/tags/F5/</loc>
+    <lastmod>2024-05-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.vkali.com/tags/LTM/</loc>
     <lastmod>2024-05-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -161,14 +168,7 @@
   </url>
   
   <url>
-    <loc>https://blog.vkali.com/tags/F5/</loc>
-    <lastmod>2024-05-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.vkali.com/tags/LTM/</loc>
+    <loc>https://blog.vkali.com/tags/Linux/</loc>
     <lastmod>2024-05-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -212,14 +212,14 @@
   </url>
   
   <url>
-    <loc>https://blog.vkali.com/categories/Linux/</loc>
+    <loc>https://blog.vkali.com/categories/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/</loc>
     <lastmod>2024-05-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://blog.vkali.com/categories/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/</loc>
+    <loc>https://blog.vkali.com/categories/Linux/</loc>
     <lastmod>2024-05-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
