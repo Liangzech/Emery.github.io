@@ -19,29 +19,27 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"blog.vkali.com","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.15.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"mac"},"bookmark":{"enable":true,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="记录一下Nexus交换机配置ASM和SSM组播配置">
+    <meta name="description" content="引言Netmiko 是一个流行的 Python 库，广泛用于通过 SSH 和 Telnet 自动化网络设备。它支持多种设备，包括 Cisco、Juniper、Arista 等。但在网络自动化的旅程中，你可能会遇到 Netmiko 尚未直接支持的设备。本文将引导你如何在 Netmiko 中添加对新平台的支持，以假想的迪普负载均衡设备为例。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Cisco Nexus交换机配置组播笔记">
-<meta property="og:url" content="https://blog.vkali.com/posts/3be22a3f.html">
+<meta property="og:title" content="为Netmiko添加新设备类型的指南">
+<meta property="og:url" content="https://blog.vkali.com/posts/13b2a32b.html">
 <meta property="og:site_name" content="Emery&#39;Blog">
-<meta property="og:description" content="记录一下Nexus交换机配置ASM和SSM组播配置">
+<meta property="og:description" content="引言Netmiko 是一个流行的 Python 库，广泛用于通过 SSH 和 Telnet 自动化网络设备。它支持多种设备，包括 Cisco、Juniper、Arista 等。但在网络自动化的旅程中，你可能会遇到 Netmiko 尚未直接支持的设备。本文将引导你如何在 Netmiko 中添加对新平台的支持，以假想的迪普负载均衡设备为例。">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2023-05-19T03:59:10.000Z">
-<meta property="article:modified_time" content="2023-05-19T07:42:35.542Z">
+<meta property="article:published_time" content="2024-05-04T09:08:51.000Z">
+<meta property="article:modified_time" content="2024-05-04T09:09:23.650Z">
 <meta property="article:author" content="隐心">
-<meta property="article:tag" content="Nexus">
-<meta property="article:tag" content="Multicast">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="https://blog.vkali.com/posts/3be22a3f.html">
+<link rel="canonical" href="https://blog.vkali.com/posts/13b2a32b.html">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.vkali.com/posts/3be22a3f.html","path":"posts/3be22a3f.html","title":"Cisco Nexus交换机配置组播笔记"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.vkali.com/posts/13b2a32b.html","path":"posts/13b2a32b.html","title":"为Netmiko添加新设备类型的指南"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Cisco Nexus交换机配置组播笔记 | Emery'Blog</title>
+<title>为Netmiko添加新设备类型的指南 | Emery'Blog</title>
   
 
 
@@ -150,7 +148,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Nexus%E4%BA%A4%E6%8D%A2%E6%9C%BA%E9%85%8D%E7%BD%AEASM"><span class="nav-number">1.</span> <span class="nav-text">Nexus交换机配置ASM</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Nexus%E4%BA%A4%E6%8D%A2%E6%9C%BA%E9%85%8D%E7%BD%AESSM"><span class="nav-number">2.</span> <span class="nav-text">Nexus交换机配置SSM</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%BB%84%E6%92%AD%E6%9F%A5%E7%9C%8B%E5%91%BD%E4%BB%A4"><span class="nav-number">3.</span> <span class="nav-text">常见组播查看命令</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4%E6%A6%82%E8%BF%B0"><span class="nav-number">2.</span> <span class="nav-text">步骤概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">创建文件结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-DPtechADXSSH-%E7%B1%BB"><span class="nav-number">3.1.</span> <span class="nav-text">实现 DPtechADXSSH 类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-init-py"><span class="nav-number">3.2.</span> <span class="nav-text">配置 __init__.py</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8-ssh-dispatcher-py-%E4%B8%AD%E6%B3%A8%E5%86%8C%E6%96%B0%E5%B9%B3%E5%8F%B0"><span class="nav-number">4.</span> <span class="nav-text">在 ssh_dispatcher.py 中注册新平台</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%96%B0%E5%B9%B3%E5%8F%B0%E6%94%AF%E6%8C%81"><span class="nav-number">5.</span> <span class="nav-text">测试新平台支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">6.</span> <span class="nav-text">结论</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -467,7 +465,7 @@ if(canvas.getContext){
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://blog.vkali.com/posts/3be22a3f.html">
+    <link itemprop="mainEntityOfPage" href="https://blog.vkali.com/posts/13b2a32b.html">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.jpg">
@@ -480,12 +478,12 @@ if(canvas.getContext){
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="Cisco Nexus交换机配置组播笔记 | Emery'Blog">
+      <meta itemprop="name" content="为Netmiko添加新设备类型的指南 | Emery'Blog">
       <meta itemprop="description" content="">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Cisco Nexus交换机配置组播笔记
+          为Netmiko添加新设备类型的指南
         </h1>
 
         <div class="post-meta-container">
@@ -497,16 +495,7 @@ if(canvas.getContext){
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2023-05-19 11:59:10 / 修改时间：15:42:35" itemprop="dateCreated datePublished" datetime="2023-05-19T11:59:10+08:00">2023-05-19</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E7%BB%84%E6%92%AD/" itemprop="url" rel="index"><span itemprop="name">组播</span></a>
-        </span>
+      <time title="创建时间：2024-05-04 17:08:51 / 修改时间：17:09:23" itemprop="dateCreated datePublished" datetime="2024-05-04T17:08:51+08:00">2024-05-04</time>
     </span>
 
   
@@ -525,8 +514,8 @@ if(canvas.getContext){
     </span>
     <span class="post-meta-item-text">Waline：</span>
   
-    <a title="waline" href="/posts/3be22a3f.html#waline" itemprop="discussionUrl">
-      <span class="post-comments-count waline-comment-count" data-path="/posts/3be22a3f.html" itemprop="commentCount"></span>
+    <a title="waline" href="/posts/13b2a32b.html#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/posts/13b2a32b.html" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -537,14 +526,14 @@ if(canvas.getContext){
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>545</span>
+      <span>867</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>2 分钟</span>
+      <span>3 分钟</span>
     </span>
 </div>
 
@@ -555,82 +544,37 @@ if(canvas.getContext){
     
     
     <div class="post-body" itemprop="articleBody">
-        <p>记录一下Nexus交换机配置ASM和SSM组播配置</p>
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>Netmiko 是一个流行的 Python 库，广泛用于通过 SSH 和 Telnet 自动化网络设备。它支持多种设备，包括 Cisco、Juniper、Arista 等。但在网络自动化的旅程中，你可能会遇到 Netmiko 尚未直接支持的设备。本文将引导你如何在 Netmiko 中添加对新平台的支持，以假想的迪普负载均衡设备为例。</p>
 <span id="more"></span>
 
-<h2 id="Nexus交换机配置ASM"><a href="#Nexus交换机配置ASM" class="headerlink" title="Nexus交换机配置ASM"></a>Nexus交换机配置ASM</h2><ul>
-<li>Nexus交换机默认开启igmp snooping。</li>
-<li>启用pim</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# feature pim</span><br></pre></td></tr></table></figure>
-
+<h2 id="步骤概述"><a href="#步骤概述" class="headerlink" title="步骤概述"></a>步骤概述</h2><p>向 Netmiko 添加新平台支持主要包括以下步骤：</p>
+<ol>
+<li>创建平台实现文件和 <code>__init__.py</code> 文件。</li>
+<li>实现平台特定的连接类。</li>
+<li>在 <code>ssh_dispatcher.py</code> 中注册新平台。</li>
+<li>测试并验证新平台支持。</li>
+</ol>
+<h2 id="创建文件结构"><a href="#创建文件结构" class="headerlink" title="创建文件结构"></a>创建文件结构</h2><hr>
+<p>假设我们要添加的新设备类型为 “dptech”，首先在 <code>netmiko/dptech/</code> 下创建以下文件：</p>
 <ul>
-<li>在组播源和组播成员网关做以下配置</li>
+<li><code>dptech.py</code>：包含实现 dptech 设备连接逻辑的类。</li>
+<li><code>__init__.py</code>：使 DPtechADXSSH 类可以被外部引用。</li>
 </ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br></pre></td></tr></table></figure>
+<h3 id="实现-DPtechADXSSH-类"><a href="#实现-DPtechADXSSH-类" class="headerlink" title="实现 DPtechADXSSH 类"></a>实现 DPtechADXSSH 类</h3><p>在 <code>dptech.py</code> 中，我们继承 Netmiko 中最接近我们设备行为的基类。考虑到迪普负载均衡设备与 Cisco 设备类似，我们可以继承 <code>CiscoBaseConnection</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 导入 Netmiko 中禁用 enable 模式的类和 Cisco 基础连接类</span></span><br><span class="line"><span class="keyword">from</span> netmiko.no_enable <span class="keyword">import</span> NoEnable  </span><br><span class="line"><span class="keyword">from</span> netmiko.cisco_base_connection <span class="keyword">import</span> CiscoBaseConnection  </span><br><span class="line">  </span><br><span class="line"><span class="comment"># 定义 DPtech ADX 设备的基础 SSH 连接类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">DPtechADXSSHBase</span>(NoEnable, CiscoBaseConnection):  </span><br><span class="line">    <span class="comment"># 会话准备方法，配置初始的会话设置</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">session_preparation</span>(<span class="params">self</span>) -&gt; <span class="literal">None</span>:  </span><br><span class="line">        <span class="string">&quot;&quot;&quot;在连接建立后准备会话。&quot;&quot;&quot;</span></span><br><span class="line">        self._test_channel_read(pattern=<span class="string">r&quot;[&gt;\]]&quot;</span>)  <span class="comment"># 测试通道是否可读，并等待提示符</span></span><br><span class="line">        self.set_base_prompt()  <span class="comment"># 设置基本提示符</span></span><br><span class="line">        self.disable_paging(command=<span class="string">&quot;terminal line 0&quot;</span>)  <span class="comment"># 禁用分页显示</span></span><br><span class="line">  </span><br><span class="line">    <span class="comment"># 进入配置模式</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">config_mode</span>(<span class="params">self, config_command: <span class="built_in">str</span> = <span class="string">&quot;config-mode&quot;</span>, pattern: <span class="built_in">str</span> = <span class="string">&quot;&quot;</span>, re_flags: <span class="built_in">int</span> = <span class="number">0</span>,</span>) -&gt; <span class="built_in">str</span>:  </span><br><span class="line">        <span class="string">&quot;&quot;&quot;进入配置模式。&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">super</span>().config_mode(config_command=config_command, pattern=pattern, re_flags=re_flags)  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># 检查是否处于配置模式</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">check_config_mode</span>(<span class="params">self, check_string: <span class="built_in">str</span> = <span class="string">&quot;]&quot;</span>, pattern: <span class="built_in">str</span> = <span class="string">&quot;&quot;</span>, force_regex: <span class="built_in">bool</span> = <span class="literal">False</span></span>) -&gt; <span class="built_in">bool</span>:  </span><br><span class="line">        <span class="string">&quot;&quot;&quot;检查设备是否处于配置模式。&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">super</span>().check_config_mode(check_string=check_string, pattern=pattern, force_regex=force_regex)  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># 保存配置</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">save_config</span>(<span class="params">self, cmd: <span class="built_in">str</span> = <span class="string">&quot;write file&quot;</span>, confirm: <span class="built_in">bool</span> = <span class="literal">False</span>, confirm_response: <span class="built_in">str</span> = <span class="string">&quot;&quot;</span></span>) -&gt; <span class="built_in">str</span>:  </span><br><span class="line">        <span class="string">&quot;&quot;&quot;使用 write file 命令保存配置。&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">super</span>().save_config(cmd=cmd, confirm=confirm, confirm_response=confirm_response)  </span><br><span class="line">  </span><br><span class="line"><span class="comment"># DPtech ADX 设备的 SSH 连接类，继承自 DPtechADXSSHBase</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">DPtechADXSSH</span>(<span class="title class_ inherited__">DPtechADXSSHBase</span>):  </span><br><span class="line">    <span class="keyword">pass</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
-<blockquote>
-<p>Tips: Cisco NX-OS does not support PIM dense mode</p>
-</blockquote>
-<ul>
-<li>组播流量可能经过的，所有网络设备的三层接口，启用pim</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# interface eth1/20</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br></pre></td></tr></table></figure>
+<p>此代码定义了两个类：<code>DPtechADXSSHBase</code> 和 <code>DPtechADXSSH</code>。<code>DPtechADXSSHBase</code> 类实现了与 DPtech ADX 设备交互所需的基础方法，例如如何进入配置模式、如何检查是否处于配置模式以及如何保存配置。它继承了 <code>NoEnable</code> 和 <code>CiscoBaseConnection</code> 类，<code>NoEnable</code> 是用来指明该设备类型不需要进入特权模式（enable mode），而是直接使用特定的命令进入配置状态或执行其他操作。</p>
+<p><code>DPtechADXSSH</code> 类目前是一个空类，它继承自 <code>DPtechADXSSHBase</code>。这样的结构允许在 <code>DPtechADXSSHBase</code> 中实现所有基础功能，而 <code>DPtechADXSSH</code> 可以用来添加任何特定于 DPtech ADX 设备的额外功能或自定义行为。</p>
+<h3 id="配置-init-py"><a href="#配置-init-py" class="headerlink" title="配置 __init__.py"></a>配置 <code>__init__.py</code></h3><p>在 <code>__init__.py</code> 文件中，我们导入并暴露 DPtechADXSSH 类：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> netmiko.dptech.dptech <span class="keyword">import</span> DPtechADXSSH  </span><br><span class="line">  </span><br><span class="line">__all__ = [<span class="string">&quot;DPtechADXSSH&quot;</span>]</span><br></pre></td></tr></table></figure>
 
-<ul>
-<li>当组播接收端的网关，有运行HSRP或者VRRP协议这类协议时，pim协议需要选举一个DR的角色，需要和VRRP的主在同一台设备上。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim dr-priority xx//值越大，优先级越高，若优先级相同则地址值越大的为DR</span><br></pre></td></tr></table></figure>
+<h2 id="在-ssh-dispatcher-py-中注册新平台"><a href="#在-ssh-dispatcher-py-中注册新平台" class="headerlink" title="在 ssh_dispatcher.py 中注册新平台"></a>在 <code>ssh_dispatcher.py</code> 中注册新平台</h2><p>修改 <code>ssh_dispatcher.py</code>，添加新平台到 CLASS_MAPPER 字典：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> netmiko.dptech <span class="keyword">import</span> DPtechADXSSH</span><br><span class="line"></span><br><span class="line">CLASS_MAPPER = &#123;</span><br><span class="line">    <span class="string">&quot;dptech_adx&quot;</span>: DPtechADXSSH,</span><br><span class="line">    <span class="comment"># 其他已有的映射</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<ul>
-<li>手工指定RP</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# ip pim rp-address xx.xx.xx.xx</span><br></pre></td></tr></table></figure>
+<h2 id="测试新平台支持"><a href="#测试新平台支持" class="headerlink" title="测试新平台支持"></a>测试新平台支持</h2><p>创建一个测试脚本来验证我们的 DPtechADXSSH 类是否按预期工作：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> netmiko <span class="keyword">import</span> ConnectHandler</span><br><span class="line"></span><br><span class="line">device = &#123;</span><br><span class="line">    <span class="string">&#x27;device_type&#x27;</span>: <span class="string">&#x27;dptechadx&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;host&#x27;</span>:   <span class="string">&#x27;your_device_ip&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;username&#x27;</span>: <span class="string">&#x27;your_username&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;password&#x27;</span>: <span class="string">&#x27;your_password&#x27;</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">net_connect = ConnectHandler(**device)</span><br><span class="line">output = net_connect.send_command(<span class="string">&quot;show version&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(output)</span><br><span class="line">net_connect.disconnect()</span><br></pre></td></tr></table></figure>
 
-<h2 id="Nexus交换机配置SSM"><a href="#Nexus交换机配置SSM" class="headerlink" title="Nexus交换机配置SSM"></a>Nexus交换机配置SSM</h2><ul>
-<li>Nexus交换机默认开启igmp snooping。</li>
-<li>启用pim</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# feature pim</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>在组播源和组播成员网关做以下配置，静态加组（组播源服务器所在vlan不用）</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br><span class="line">switch01(config-if)# ip igmp static-oif 232.1.1.1 source 192.168.10.101</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips: Cisco NX-OS does not support PIM dense mode</p>
-</blockquote>
-<ul>
-<li>组播流量可能经过的，所有网络设备的三层接口，静态加组，启用pim</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# interface eth1/20</span><br><span class="line">switch01(config-if)# ip pim sparse-mode</span><br><span class="line">switch01(config-if)# ip igmp version 3</span><br><span class="line">switch01(config-if)# ip igmp static-oif 232.1.1.1 source 192.168.10.101</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>当组播接收端的网关，有运行HSRP或者VRRP协议这类协议时，pim协议需要选举一个DR的角色，需要和VRRP的主在同一台设备上。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# interface vlan xxx</span><br><span class="line">switch01(config-if)# ip pim dr-priority xx//值越大，优先级越高，若优先级相同则地址值越大的为DR</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>限制SSM组播地址范围</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">switch01(config)# ip pim ssm range xxx</span><br></pre></td></tr></table></figure>
-
-<h2 id="常见组播查看命令"><a href="#常见组播查看命令" class="headerlink" title="常见组播查看命令"></a>常见组播查看命令</h2><ul>
-<li>查看组播路由表</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">show ip mroute</span><br><span class="line">show ip mroute detail</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看组播二层转发表</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show ip igmp snooping mrouter</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看当前启用的查询器的IP地址、查询间隔和查询计时器等信息</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show ip igmp snooping querier</span><br></pre></td></tr></table></figure>
-
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>通过上述步骤，我们演示了如何在 Netmiko 中添加对新平台的支持。这个过程需要对目标设备的行为有一定的了解，并可能需要根据实际设备调整代码。</p>
 
     </div>
     <div>
@@ -659,7 +603,7 @@ if(canvas.getContext){
   </li>
   <li class="post-copyright-link">
       <strong>本文链接：</strong>
-      <a href="https://blog.vkali.com/posts/3be22a3f.html" title="Cisco Nexus交换机配置组播笔记">https://blog.vkali.com/posts/3be22a3f.html</a>
+      <a href="https://blog.vkali.com/posts/13b2a32b.html" title="为Netmiko添加新设备类型的指南">https://blog.vkali.com/posts/13b2a32b.html</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -667,10 +611,6 @@ if(canvas.getContext){
 </ul>
 </div>
 
-          <div class="post-tags">
-              <a href="/tags/Nexus/" rel="tag"><i class="fa fa-tag"></i> Nexus</a>
-              <a href="/tags/Multicast/" rel="tag"><i class="fa fa-tag"></i> Multicast</a>
-          </div>
 
         
   <div class="addthis_inline_share_toolbox social-like">
@@ -679,14 +619,11 @@ if(canvas.getContext){
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/posts/24ef9542.html" rel="prev" title="Linux组播测试工具之omping">
-                  <i class="fa fa-chevron-left"></i> Linux组播测试工具之omping
+                <a href="/posts/b86ffcc3.html" rel="prev" title="Cisco Nexus Telemetry监控的简单实现">
+                  <i class="fa fa-chevron-left"></i> Cisco Nexus Telemetry监控的简单实现
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/posts/b86ffcc3.html" rel="next" title="Cisco Nexus Telemetry监控的简单实现">
-                  Cisco Nexus Telemetry监控的简单实现 <i class="fa fa-chevron-right"></i>
-                </a>
             </div>
           </div>
     </footer>
@@ -806,7 +743,7 @@ setInterval("createtime()",250);
 
 
 
-<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-cn","enable":true,"serverURL":"https://waline.vkali.com/","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":true,"pageview":false,"placeholder":"请文明评论呀~","avatar":"mm","meta":["nick","mail","link"],"pageSize":10,"visitor":true,"comment_count":true,"requiredFields":["nick","mail"],"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","el":"#waline","comment":true,"path":"/posts/3be22a3f.html"}</script>
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-cn","enable":true,"serverURL":"https://waline.vkali.com/","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":true,"pageview":false,"placeholder":"请文明评论呀~","avatar":"mm","meta":["nick","mail","link"],"pageSize":10,"visitor":true,"comment_count":true,"requiredFields":["nick","mail"],"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","el":"#waline","comment":true,"path":"/posts/13b2a32b.html"}</script>
 <link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
 <script>
 document.addEventListener('page:loaded', () => {

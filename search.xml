@@ -1,6 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Centos Linux PTP高精度时钟同步</title>
+    <url>/posts/d4bc7142.html</url>
+    <content><![CDATA[<p>Centos7使用ptp4l和phc2sys进行时钟同步时测试步骤以及配置文件，分别使用组播模式和单播模式</p>
+<span id="more"></span>
+
+<h2 id="安装PTP时钟同步软件"><a href="#安装PTP时钟同步软件" class="headerlink" title="安装PTP时钟同步软件"></a>安装PTP时钟同步软件</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install linuxptp</span><br></pre></td></tr></table></figure>
+
+<h2 id="查看网卡是否支持PTP"><a href="#查看网卡是否支持PTP" class="headerlink" title="查看网卡是否支持PTP"></a>查看网卡是否支持PTP</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]# ethtool -T ens192f0</span><br><span class="line">Time stamping parameters for ens192f0:</span><br><span class="line">Capabilities:</span><br><span class="line">        hardware-transmit     (SOF_TIMESTAMPING_TX_HARDWARE)</span><br><span class="line">        software-transmit     (SOF_TIMESTAMPING_TX_SOFTWARE)</span><br><span class="line">        hardware-receive      (SOF_TIMESTAMPING_RX_HARDWARE)</span><br><span class="line">        software-receive      (SOF_TIMESTAMPING_RX_SOFTWARE)</span><br><span class="line">        software-system-clock (SOF_TIMESTAMPING_SOFTWARE)</span><br><span class="line">        hardware-raw-clock    (SOF_TIMESTAMPING_RAW_HARDWARE)</span><br><span class="line">PTP Hardware Clock: 0</span><br><span class="line">Hardware Transmit Timestamp Modes:</span><br><span class="line">        off                   (HWTSTAMP_TX_OFF)</span><br><span class="line">        on                    (HWTSTAMP_TX_ON)</span><br><span class="line">Hardware Receive Filter Modes:</span><br><span class="line">        none                  (HWTSTAMP_FILTER_NONE)</span><br><span class="line">        ptpv1-l4-sync         (HWTSTAMP_FILTER_PTP_V1_L4_SYNC)</span><br><span class="line">        ptpv1-l4-delay-req    (HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ)</span><br><span class="line">        ptpv2-l4-event        (HWTSTAMP_FILTER_PTP_V2_L4_EVENT)</span><br><span class="line">        ptpv2-l4-sync         (HWTSTAMP_FILTER_PTP_V2_L4_SYNC)</span><br><span class="line">        ptpv2-l4-delay-req    (HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ)</span><br><span class="line">        ptpv2-l2-event        (HWTSTAMP_FILTER_PTP_V2_L2_EVENT)</span><br><span class="line">        ptpv2-l2-sync         (HWTSTAMP_FILTER_PTP_V2_L2_SYNC)</span><br><span class="line">        ptpv2-l2-delay-req    (HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ)</span><br><span class="line">        ptpv2-event           (HWTSTAMP_FILTER_PTP_V2_EVENT)</span><br><span class="line">        ptpv2-sync            (HWTSTAMP_FILTER_PTP_V2_SYNC)</span><br><span class="line">        ptpv2-delay-req       (HWTSTAMP_FILTER_PTP_V2_DELAY_REQ)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>参数解释</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">参数</th>
+<th align="center">解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">SOF_TIMESTAMPING_TX_HARDWARE</td>
+<td align="center">发送硬件时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_TX_SOFTWARE</td>
+<td align="center">发送软件时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_RX_HARDWARE</td>
+<td align="center">接收硬件时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_RX_SOFTWARE</td>
+<td align="center">接收软件时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_SOFTWARE</td>
+<td align="center">返回软件中生成的系统时间戳</td>
+</tr>
+<tr>
+<td align="center">SOF_TIMESTAMPING_RAW_HARDWARE</td>
+<td align="center">返回原始硬件时间戳</td>
+</tr>
+</tbody></table>
+<h2 id="组播方式进行PTP时间同步"><a href="#组播方式进行PTP时间同步" class="headerlink" title="组播方式进行PTP时间同步"></a>组播方式进行PTP时间同步</h2><ul>
+<li>服务器网卡使用bond mode 1模式PTP同步</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ptp4l -i bond0 -H -s -m</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips:</p>
+<p>-s 指定本地为slave；-m 在控制台输出日志；-H 使用硬件时钟同步</p>
+</blockquote>
+<ul>
+<li>执行上面命令后会有以下回显，说明时钟同步生效</li>
+</ul>
+<blockquote>
+<p>ptp4l[687501.682]: selected &#x2F;dev&#x2F;ptp1 as PTP clock<br>ptp4l[687501.684]: port 1: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[687501.684]: port 0: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[687503.243]: port 1: new foreign master 3c26e4.fffe.7a0aa7-204<br>ptp4l[687506.912]: selected best master clock 448816.fffe.aa778f<br>ptp4l[687506.912]: port 1: LISTENING to UNCALIBRATED on RS_SLAVE<br>ptp4l[687508.289]: port 1: UNCALIBRATED to SLAVE on MASTER_CLOCK_SELECTED<br>ptp4l[687508.520]: rms 2386580 max 3375286 freq  -7781 +&#x2F;- 571 delay   254 +&#x2F;-   0<br>ptp4l[687509.441]: rms  359 max  585 freq  -7623 +&#x2F;- 192<br>ptp4l[687510.362]: rms  177 max  230 freq  -7113 +&#x2F;- 100 delay   256 +&#x2F;-   0<br>ptp4l[687511.279]: rms  229 max  256 freq  -6891 +&#x2F;-  22 delay   258 +&#x2F;-   0</p>
+</blockquote>
+<ul>
+<li>同步到系统时间</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">phc2sys  -m -s /dev/ptp1  -w</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips:</p>
+<p>-s 指定主时钟；-w 等待ptp4l；-m 在控制台输出日志</p>
+</blockquote>
+<ul>
+<li>执行上面命令后会有以下回显，说明系统时间同步成功</li>
+</ul>
+<blockquote>
+<p>phc2sys[689101.632]: CLOCK_REALTIME phc offset 35216869089159 s0 freq +83339959 delay    485<br>phc2sys[689102.633]: CLOCK_REALTIME phc offset 35216778125348 s1 freq   +7835 delay    488<br>phc2sys[689103.633]: CLOCK_REALTIME phc offset   -145774 s2 freq -137939 delay    614<br>phc2sys[689104.634]: CLOCK_REALTIME phc offset      -188 s2 freq  -36085 delay    563<br>phc2sys[689105.634]: CLOCK_REALTIME phc offset     43695 s2 freq   +7741 delay    553<br>phc2sys[689106.634]: CLOCK_REALTIME phc offset     43760 s2 freq  +20915 delay    530<br>phc2sys[689107.634]: CLOCK_REALTIME phc offset     30637 s2 freq  +20920 delay    481<br>phc2sys[689108.635]: CLOCK_REALTIME phc offset     17436 s2 freq  +16910 delay    607<br>phc2sys[689109.635]: CLOCK_REALTIME phc offset      8291 s2 freq  +12996 delay    516<br>phc2sys[689110.635]: CLOCK_REALTIME phc offset      2925 s2 freq  +10117 delay    576<br>phc2sys[689111.635]: CLOCK_REALTIME phc offset       430 s2 freq   +8500 delay    563<br>phc2sys[689112.635]: CLOCK_REALTIME phc offset      -332 s2 freq   +7867 delay    570<br>phc2sys[689113.636]: CLOCK_REALTIME phc offset      -551 s2 freq   +7548 delay    613<br>phc2sys[689114.636]: CLOCK_REALTIME phc offset      -322 s2 freq   +7612 delay    524<br>phc2sys[689115.636]: CLOCK_REALTIME phc offset      -128 s2 freq   +7709 delay    509<br>phc2sys[689116.637]: CLOCK_REALTIME phc offset      -148 s2 freq   +7651 delay    573<br>phc2sys[689117.637]: CLOCK_REALTIME phc offset      -139 s2 freq   +7615 delay    565<br>phc2sys[689118.637]: CLOCK_REALTIME phc offset        56 s2 freq   +7769 delay    524<br>phc2sys[689119.637]: CLOCK_REALTIME phc offset        65 s2 freq   +7794 delay    508<br>phc2sys[689120.638]: CLOCK_REALTIME phc offset        33 s2 freq   +7782 delay    563<br>phc2sys[689121.638]: CLOCK_REALTIME phc offset         2 s2 freq   +7761 delay    593<br>phc2sys[689122.638]: CLOCK_REALTIME phc offset        37 s2 freq   +7796 delay    525</p>
+</blockquote>
+<h2 id="单播模式进行PTP时间同步"><a href="#单播模式进行PTP时间同步" class="headerlink" title="单播模式进行PTP时间同步"></a>单播模式进行PTP时间同步</h2><ul>
+<li>ptp4l配置文件模板</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#</span><br><span class="line"># UNICAST slave example configuration with contrived master tables.</span><br><span class="line"># This example will not work out of the box!</span><br><span class="line">#</span><br><span class="line">[global]</span><br><span class="line">#</span><br><span class="line"># Request service for sixty seconds.</span><br><span class="line">#</span><br><span class="line">unicast_req_duration	60</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table has four possible UDPv4 master clocks.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		1</span><br><span class="line">logQueryInterval	2</span><br><span class="line">UDPv4			192.168.1.11</span><br><span class="line">UDPv4			192.168.2.22</span><br><span class="line">UDPv4			192.168.3.33</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table has just one Layer-2 master clock.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		2</span><br><span class="line">logQueryInterval	2</span><br><span class="line">L2			00:11:22:33:44:55</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table would be for use with the P2P delay mechanism.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		3</span><br><span class="line">logQueryInterval	2</span><br><span class="line">peer_address		192.168.4.44</span><br><span class="line">UDPv4			192.168.4.44</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># eth0 uses the master table with ID 1 over UDPv4.</span><br><span class="line">#</span><br><span class="line">[eth0]</span><br><span class="line">unicast_master_table	1</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># eth1 uses the master table with ID 2 over Layer-2.</span><br><span class="line">#</span><br><span class="line">[eth1]</span><br><span class="line">network_transport	L2</span><br><span class="line">unicast_master_table	2</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: 在只使用单播的情况下，可以把table_id为 2 和 3 的相关参数注释</p>
+</blockquote>
+<ul>
+<li>ptp4l指定配置文件进行时钟同步</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ptp4l -f /etc/ptp4l.conf -H -s -m</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>执行上面命令后会有以下回显，说明时钟同步生效</li>
+</ul>
+<blockquote>
+<p>ptp4l[689972.642]: selected &#x2F;dev&#x2F;ptp1 as PTP clock<br>ptp4l[689972.644]: port 1: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[689972.644]: port 0: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[689973.135]: port 1: new foreign master 3c26e4.fffe.7a0aa7-204<br>ptp4l[689977.471]: selected best master clock 448816.fffe.aa778f<br>ptp4l[689977.471]: port 1: LISTENING to UNCALIBRATED on RS_SLAVE<br>ptp4l[689977.918]: master offset      -4525 s0 freq   -7006 path delay       277<br>ptp4l[689978.190]: master offset      -4510 s2 freq   -6946 path delay       277<br>ptp4l[689978.190]: port 1: UNCALIBRATED to SLAVE on MASTER_CLOCK_SELECTED<br>ptp4l[689978.460]: master offset      -4549 s2 freq  -11495 path delay       277<br>ptp4l[689978.732]: master offset      -3439 s2 freq  -11750 path delay       277<br>ptp4l[689979.005]: master offset      -2246 s2 freq  -11589 path delay       277<br>ptp4l[689979.275]: master offset      -1119 s2 freq  -11135 path delay       277<br>ptp4l[689979.545]: master offset        -89 s2 freq  -10441 path delay       277</p>
+</blockquote>
+<ul>
+<li>通过抓包可以看出PTP是单播模式,使用端口为UDP 320</li>
+</ul>
+<blockquote>
+<p>6	1.693831	192.168.10.100	192.168.10.1	PTPv2	96	Signalling Message</p>
+<p>User Datagram Protocol, Src Port: 320, Dst Port: 320<br>   Source Port: 320<br>   Destination Port: 320<br>   Length: 62<br>   Checksum: 0xc823 [unverified]<br>   [Checksum Status: Unverified]<br>   [Stream index: 3]<br>   [Timestamps]<br>       [Time since first frame: 0.000000000 seconds]<br>       [Time since previous frame: 0.000000000 seconds]<br>   UDP payload (54 bytes)</p>
+</blockquote>
+<h2 id="使用systemctl控制ptp4l与phc2sys"><a href="#使用systemctl控制ptp4l与phc2sys" class="headerlink" title="使用systemctl控制ptp4l与phc2sys"></a>使用systemctl控制ptp4l与phc2sys</h2><h3 id="组播模式示例"><a href="#组播模式示例" class="headerlink" title="组播模式示例"></a>组播模式示例</h3><ul>
+<li>ptp4l启动文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/ptp4l.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Precision Time Protocol (PTP) service</span><br><span class="line">After=network-online.target</span><br><span class="line">Wants=network-online.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/ptp4l</span><br><span class="line">ExecStart=/usr/sbin/ptp4l -i bond0  -H -s -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>phc2sys启动文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/phc2sys.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Synchronize system clock or PTP hardware clock (PHC)</span><br><span class="line">After=ntpdate.service ptp4l.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/phc2sys</span><br><span class="line">ExecStart=/usr/sbin/phc2sys -s /dev/ptp1 -w -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<h3 id="单播模式示例"><a href="#单播模式示例" class="headerlink" title="单播模式示例"></a>单播模式示例</h3><ul>
+<li>ptp4l启动文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/ptp4l.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Precision Time Protocol (PTP) service</span><br><span class="line">After=network-online.target</span><br><span class="line">Wants=network-online.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/ptp4l</span><br><span class="line">ExecStart=/usr/sbin/ptp4l -f/etc/ptp4l.conf  -H -s -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li>phc2sys启动文件与组播模式下配置文件一致</li>
+</ul>
+<h3 id="启动服务及相关检查"><a href="#启动服务及相关检查" class="headerlink" title="启动服务及相关检查"></a>启动服务及相关检查</h3><ul>
+<li>启动服务&amp;开机自启</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl enable ptp4l</span><br><span class="line">systemctl start ptp4l</span><br><span class="line">systemctl enable phc2sys</span><br><span class="line">systemctl start phc2sys</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看软件运行状态</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl status ptp4l</span><br><span class="line">systemctl status phc2sys</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看软件运行日志</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">journalctl -f -u ptp4l</span><br><span class="line">journalctl -f -u phc2sys</span><br><span class="line">或者查看系统日志</span><br><span class="line">tail -f /var/log/messages</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
+]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>PTP</tag>
+        <tag>PTP4l</tag>
+        <tag>phc2sys</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Cisco Nexus交换机配置组播笔记</title>
     <url>/posts/3be22a3f.html</url>
     <content><![CDATA[<p>记录一下Nexus交换机配置ASM和SSM组播配置</p>
@@ -404,162 +560,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Centos Linux PTP高精度时钟同步</title>
-    <url>/posts/d4bc7142.html</url>
-    <content><![CDATA[<p>Centos7使用ptp4l和phc2sys进行时钟同步时测试步骤以及配置文件，分别使用组播模式和单播模式</p>
-<span id="more"></span>
-
-<h2 id="安装PTP时钟同步软件"><a href="#安装PTP时钟同步软件" class="headerlink" title="安装PTP时钟同步软件"></a>安装PTP时钟同步软件</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum -y install linuxptp</span><br></pre></td></tr></table></figure>
-
-<h2 id="查看网卡是否支持PTP"><a href="#查看网卡是否支持PTP" class="headerlink" title="查看网卡是否支持PTP"></a>查看网卡是否支持PTP</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]# ethtool -T ens192f0</span><br><span class="line">Time stamping parameters for ens192f0:</span><br><span class="line">Capabilities:</span><br><span class="line">        hardware-transmit     (SOF_TIMESTAMPING_TX_HARDWARE)</span><br><span class="line">        software-transmit     (SOF_TIMESTAMPING_TX_SOFTWARE)</span><br><span class="line">        hardware-receive      (SOF_TIMESTAMPING_RX_HARDWARE)</span><br><span class="line">        software-receive      (SOF_TIMESTAMPING_RX_SOFTWARE)</span><br><span class="line">        software-system-clock (SOF_TIMESTAMPING_SOFTWARE)</span><br><span class="line">        hardware-raw-clock    (SOF_TIMESTAMPING_RAW_HARDWARE)</span><br><span class="line">PTP Hardware Clock: 0</span><br><span class="line">Hardware Transmit Timestamp Modes:</span><br><span class="line">        off                   (HWTSTAMP_TX_OFF)</span><br><span class="line">        on                    (HWTSTAMP_TX_ON)</span><br><span class="line">Hardware Receive Filter Modes:</span><br><span class="line">        none                  (HWTSTAMP_FILTER_NONE)</span><br><span class="line">        ptpv1-l4-sync         (HWTSTAMP_FILTER_PTP_V1_L4_SYNC)</span><br><span class="line">        ptpv1-l4-delay-req    (HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ)</span><br><span class="line">        ptpv2-l4-event        (HWTSTAMP_FILTER_PTP_V2_L4_EVENT)</span><br><span class="line">        ptpv2-l4-sync         (HWTSTAMP_FILTER_PTP_V2_L4_SYNC)</span><br><span class="line">        ptpv2-l4-delay-req    (HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ)</span><br><span class="line">        ptpv2-l2-event        (HWTSTAMP_FILTER_PTP_V2_L2_EVENT)</span><br><span class="line">        ptpv2-l2-sync         (HWTSTAMP_FILTER_PTP_V2_L2_SYNC)</span><br><span class="line">        ptpv2-l2-delay-req    (HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ)</span><br><span class="line">        ptpv2-event           (HWTSTAMP_FILTER_PTP_V2_EVENT)</span><br><span class="line">        ptpv2-sync            (HWTSTAMP_FILTER_PTP_V2_SYNC)</span><br><span class="line">        ptpv2-delay-req       (HWTSTAMP_FILTER_PTP_V2_DELAY_REQ)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>参数解释</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th align="center">参数</th>
-<th align="center">解释</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">SOF_TIMESTAMPING_TX_HARDWARE</td>
-<td align="center">发送硬件时间戳</td>
-</tr>
-<tr>
-<td align="center">SOF_TIMESTAMPING_TX_SOFTWARE</td>
-<td align="center">发送软件时间戳</td>
-</tr>
-<tr>
-<td align="center">SOF_TIMESTAMPING_RX_HARDWARE</td>
-<td align="center">接收硬件时间戳</td>
-</tr>
-<tr>
-<td align="center">SOF_TIMESTAMPING_RX_SOFTWARE</td>
-<td align="center">接收软件时间戳</td>
-</tr>
-<tr>
-<td align="center">SOF_TIMESTAMPING_SOFTWARE</td>
-<td align="center">返回软件中生成的系统时间戳</td>
-</tr>
-<tr>
-<td align="center">SOF_TIMESTAMPING_RAW_HARDWARE</td>
-<td align="center">返回原始硬件时间戳</td>
-</tr>
-</tbody></table>
-<h2 id="组播方式进行PTP时间同步"><a href="#组播方式进行PTP时间同步" class="headerlink" title="组播方式进行PTP时间同步"></a>组播方式进行PTP时间同步</h2><ul>
-<li>服务器网卡使用bond mode 1模式PTP同步</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ptp4l -i bond0 -H -s -m</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips:</p>
-<p>-s 指定本地为slave；-m 在控制台输出日志；-H 使用硬件时钟同步</p>
-</blockquote>
-<ul>
-<li>执行上面命令后会有以下回显，说明时钟同步生效</li>
-</ul>
-<blockquote>
-<p>ptp4l[687501.682]: selected &#x2F;dev&#x2F;ptp1 as PTP clock<br>ptp4l[687501.684]: port 1: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[687501.684]: port 0: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[687503.243]: port 1: new foreign master 3c26e4.fffe.7a0aa7-204<br>ptp4l[687506.912]: selected best master clock 448816.fffe.aa778f<br>ptp4l[687506.912]: port 1: LISTENING to UNCALIBRATED on RS_SLAVE<br>ptp4l[687508.289]: port 1: UNCALIBRATED to SLAVE on MASTER_CLOCK_SELECTED<br>ptp4l[687508.520]: rms 2386580 max 3375286 freq  -7781 +&#x2F;- 571 delay   254 +&#x2F;-   0<br>ptp4l[687509.441]: rms  359 max  585 freq  -7623 +&#x2F;- 192<br>ptp4l[687510.362]: rms  177 max  230 freq  -7113 +&#x2F;- 100 delay   256 +&#x2F;-   0<br>ptp4l[687511.279]: rms  229 max  256 freq  -6891 +&#x2F;-  22 delay   258 +&#x2F;-   0</p>
-</blockquote>
-<ul>
-<li>同步到系统时间</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">phc2sys  -m -s /dev/ptp1  -w</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips:</p>
-<p>-s 指定主时钟；-w 等待ptp4l；-m 在控制台输出日志</p>
-</blockquote>
-<ul>
-<li>执行上面命令后会有以下回显，说明系统时间同步成功</li>
-</ul>
-<blockquote>
-<p>phc2sys[689101.632]: CLOCK_REALTIME phc offset 35216869089159 s0 freq +83339959 delay    485<br>phc2sys[689102.633]: CLOCK_REALTIME phc offset 35216778125348 s1 freq   +7835 delay    488<br>phc2sys[689103.633]: CLOCK_REALTIME phc offset   -145774 s2 freq -137939 delay    614<br>phc2sys[689104.634]: CLOCK_REALTIME phc offset      -188 s2 freq  -36085 delay    563<br>phc2sys[689105.634]: CLOCK_REALTIME phc offset     43695 s2 freq   +7741 delay    553<br>phc2sys[689106.634]: CLOCK_REALTIME phc offset     43760 s2 freq  +20915 delay    530<br>phc2sys[689107.634]: CLOCK_REALTIME phc offset     30637 s2 freq  +20920 delay    481<br>phc2sys[689108.635]: CLOCK_REALTIME phc offset     17436 s2 freq  +16910 delay    607<br>phc2sys[689109.635]: CLOCK_REALTIME phc offset      8291 s2 freq  +12996 delay    516<br>phc2sys[689110.635]: CLOCK_REALTIME phc offset      2925 s2 freq  +10117 delay    576<br>phc2sys[689111.635]: CLOCK_REALTIME phc offset       430 s2 freq   +8500 delay    563<br>phc2sys[689112.635]: CLOCK_REALTIME phc offset      -332 s2 freq   +7867 delay    570<br>phc2sys[689113.636]: CLOCK_REALTIME phc offset      -551 s2 freq   +7548 delay    613<br>phc2sys[689114.636]: CLOCK_REALTIME phc offset      -322 s2 freq   +7612 delay    524<br>phc2sys[689115.636]: CLOCK_REALTIME phc offset      -128 s2 freq   +7709 delay    509<br>phc2sys[689116.637]: CLOCK_REALTIME phc offset      -148 s2 freq   +7651 delay    573<br>phc2sys[689117.637]: CLOCK_REALTIME phc offset      -139 s2 freq   +7615 delay    565<br>phc2sys[689118.637]: CLOCK_REALTIME phc offset        56 s2 freq   +7769 delay    524<br>phc2sys[689119.637]: CLOCK_REALTIME phc offset        65 s2 freq   +7794 delay    508<br>phc2sys[689120.638]: CLOCK_REALTIME phc offset        33 s2 freq   +7782 delay    563<br>phc2sys[689121.638]: CLOCK_REALTIME phc offset         2 s2 freq   +7761 delay    593<br>phc2sys[689122.638]: CLOCK_REALTIME phc offset        37 s2 freq   +7796 delay    525</p>
-</blockquote>
-<h2 id="单播模式进行PTP时间同步"><a href="#单播模式进行PTP时间同步" class="headerlink" title="单播模式进行PTP时间同步"></a>单播模式进行PTP时间同步</h2><ul>
-<li>ptp4l配置文件模板</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#</span><br><span class="line"># UNICAST slave example configuration with contrived master tables.</span><br><span class="line"># This example will not work out of the box!</span><br><span class="line">#</span><br><span class="line">[global]</span><br><span class="line">#</span><br><span class="line"># Request service for sixty seconds.</span><br><span class="line">#</span><br><span class="line">unicast_req_duration	60</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table has four possible UDPv4 master clocks.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		1</span><br><span class="line">logQueryInterval	2</span><br><span class="line">UDPv4			192.168.1.11</span><br><span class="line">UDPv4			192.168.2.22</span><br><span class="line">UDPv4			192.168.3.33</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table has just one Layer-2 master clock.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		2</span><br><span class="line">logQueryInterval	2</span><br><span class="line">L2			00:11:22:33:44:55</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># This table would be for use with the P2P delay mechanism.</span><br><span class="line">#</span><br><span class="line">[unicast_master_table]</span><br><span class="line">table_id		3</span><br><span class="line">logQueryInterval	2</span><br><span class="line">peer_address		192.168.4.44</span><br><span class="line">UDPv4			192.168.4.44</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># eth0 uses the master table with ID 1 over UDPv4.</span><br><span class="line">#</span><br><span class="line">[eth0]</span><br><span class="line">unicast_master_table	1</span><br><span class="line"></span><br><span class="line">#</span><br><span class="line"># eth1 uses the master table with ID 2 over Layer-2.</span><br><span class="line">#</span><br><span class="line">[eth1]</span><br><span class="line">network_transport	L2</span><br><span class="line">unicast_master_table	2</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips: 在只使用单播的情况下，可以把table_id为 2 和 3 的相关参数注释</p>
-</blockquote>
-<ul>
-<li>ptp4l指定配置文件进行时钟同步</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ptp4l -f /etc/ptp4l.conf -H -s -m</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>执行上面命令后会有以下回显，说明时钟同步生效</li>
-</ul>
-<blockquote>
-<p>ptp4l[689972.642]: selected &#x2F;dev&#x2F;ptp1 as PTP clock<br>ptp4l[689972.644]: port 1: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[689972.644]: port 0: INITIALIZING to LISTENING on INIT_COMPLETE<br>ptp4l[689973.135]: port 1: new foreign master 3c26e4.fffe.7a0aa7-204<br>ptp4l[689977.471]: selected best master clock 448816.fffe.aa778f<br>ptp4l[689977.471]: port 1: LISTENING to UNCALIBRATED on RS_SLAVE<br>ptp4l[689977.918]: master offset      -4525 s0 freq   -7006 path delay       277<br>ptp4l[689978.190]: master offset      -4510 s2 freq   -6946 path delay       277<br>ptp4l[689978.190]: port 1: UNCALIBRATED to SLAVE on MASTER_CLOCK_SELECTED<br>ptp4l[689978.460]: master offset      -4549 s2 freq  -11495 path delay       277<br>ptp4l[689978.732]: master offset      -3439 s2 freq  -11750 path delay       277<br>ptp4l[689979.005]: master offset      -2246 s2 freq  -11589 path delay       277<br>ptp4l[689979.275]: master offset      -1119 s2 freq  -11135 path delay       277<br>ptp4l[689979.545]: master offset        -89 s2 freq  -10441 path delay       277</p>
-</blockquote>
-<ul>
-<li>通过抓包可以看出PTP是单播模式,使用端口为UDP 320</li>
-</ul>
-<blockquote>
-<p>6	1.693831	192.168.10.100	192.168.10.1	PTPv2	96	Signalling Message</p>
-<p>User Datagram Protocol, Src Port: 320, Dst Port: 320<br>   Source Port: 320<br>   Destination Port: 320<br>   Length: 62<br>   Checksum: 0xc823 [unverified]<br>   [Checksum Status: Unverified]<br>   [Stream index: 3]<br>   [Timestamps]<br>       [Time since first frame: 0.000000000 seconds]<br>       [Time since previous frame: 0.000000000 seconds]<br>   UDP payload (54 bytes)</p>
-</blockquote>
-<h2 id="使用systemctl控制ptp4l与phc2sys"><a href="#使用systemctl控制ptp4l与phc2sys" class="headerlink" title="使用systemctl控制ptp4l与phc2sys"></a>使用systemctl控制ptp4l与phc2sys</h2><h3 id="组播模式示例"><a href="#组播模式示例" class="headerlink" title="组播模式示例"></a>组播模式示例</h3><ul>
-<li>ptp4l启动文件</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/ptp4l.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Precision Time Protocol (PTP) service</span><br><span class="line">After=network-online.target</span><br><span class="line">Wants=network-online.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/ptp4l</span><br><span class="line">ExecStart=/usr/sbin/ptp4l -i bond0  -H -s -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>phc2sys启动文件</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/phc2sys.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Synchronize system clock or PTP hardware clock (PHC)</span><br><span class="line">After=ntpdate.service ptp4l.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/phc2sys</span><br><span class="line">ExecStart=/usr/sbin/phc2sys -s /dev/ptp1 -w -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
-
-<h3 id="单播模式示例"><a href="#单播模式示例" class="headerlink" title="单播模式示例"></a>单播模式示例</h3><ul>
-<li>ptp4l启动文件</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim /usr/lib/systemd/system/ptp4l.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=Precision Time Protocol (PTP) service</span><br><span class="line">After=network-online.target</span><br><span class="line">Wants=network-online.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">EnvironmentFile=-/etc/sysconfig/ptp4l</span><br><span class="line">ExecStart=/usr/sbin/ptp4l -f/etc/ptp4l.conf  -H -s -m</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
-
-
-
-<ul>
-<li>phc2sys启动文件与组播模式下配置文件一致</li>
-</ul>
-<h3 id="启动服务及相关检查"><a href="#启动服务及相关检查" class="headerlink" title="启动服务及相关检查"></a>启动服务及相关检查</h3><ul>
-<li>启动服务&amp;开机自启</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl enable ptp4l</span><br><span class="line">systemctl start ptp4l</span><br><span class="line">systemctl enable phc2sys</span><br><span class="line">systemctl start phc2sys</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看软件运行状态</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl status ptp4l</span><br><span class="line">systemctl status phc2sys</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看软件运行日志</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">journalctl -f -u ptp4l</span><br><span class="line">journalctl -f -u phc2sys</span><br><span class="line">或者查看系统日志</span><br><span class="line">tail -f /var/log/messages</span><br></pre></td></tr></table></figure>
-
-
-
-
-
-
-
-
-
-
-
-]]></content>
-      <categories>
-        <category>Linux</category>
-      </categories>
-      <tags>
-        <tag>PTP</tag>
-        <tag>PTP4l</tag>
-        <tag>phc2sys</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Linux组播测试工具之mcjoin</title>
     <url>/posts/dba36f02.html</url>
     <content><![CDATA[<p>mcjoin是一个简单易用的工具，用于测试IPv4和IPv6组播，包括组播生成器（服务器）和组播数据接收器（客户端），支持加入&#x2F;发送到一个或多个组，支持任意源和源特定组播（ASM (*,G)和SSM (S,G)），支持IPv4和IPv6。</p>
@@ -747,101 +747,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Zerotier自建moon教程</title>
-    <url>/posts/889fbe9b.html</url>
-    <content><![CDATA[<p>Zerotier官方服务器都在国外，使用起来特别卡，又想使用这种可以局域网直接访问私网地址的方式，因此考虑自建moon节点。</p>
-<span id="more"></span>
-
-<h2 id="VPS设置"><a href="#VPS设置" class="headerlink" title="VPS设置"></a>VPS设置</h2><ul>
-<li>安装zeroiter</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -s https://install.zerotier.com | sudo bash</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>启动服务、查看服务运行状态并设置开启自启</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start zerotier-one</span><br><span class="line">systemctl status zerotier-one</span><br><span class="line">systemctl enable zerotier-one</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>加入zerotier网络</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli join zerotier网站中的ID</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>生成moon.json模板</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/lib/zerotier-one/</span><br><span class="line"></span><br><span class="line">zerotier-idtool initmoon identity.public &gt; moon.json</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>修改moon.json配置文件</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim moon.json</span><br><span class="line"></span><br><span class="line">找到以下字段 </span><br><span class="line">&quot;stableEndpoints&quot;: [ &quot;你的VPS公网地址/9993&quot; ]</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>生成签名文件</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-idtool genmoon moon.json</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>创建存放目录</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mkdir moons.d</span><br><span class="line">把签名文件移动至新建目录</span><br><span class="line">mv 000000xxxx.moon moons.d/</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>重启服务</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl restart zerotier-one</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips: 防火墙需要放通TCP&#x2F;UDP的9993端口</p>
-</blockquote>
-<h2 id="客户端设置"><a href="#客户端设置" class="headerlink" title="客户端设置"></a>客户端设置</h2><ul>
-<li>Windows power shell管理员权限执行以下命令</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli.bat orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看是否成功</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli.bat listpeers</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>Linux</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看是否成功</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli listpeers</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>Tips: 加入成功的话会显示节点列表中有自己的VPS地址的moon节点</p>
-</blockquote>
-<h2 id="Openwrt"><a href="#Openwrt" class="headerlink" title="Openwrt"></a>Openwrt</h2><ul>
-<li>在zerotier页面开启，并打开NAT，命令行执行命令</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>在VPS上添加openwrt路由器的私网路由,gw之后的地址为openwrt在zerotier中获得的地址。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">route add -net x.x.x.x/x gw x.x.x.x</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>VPS开启路由转发</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sysctl -w net.ipv4.ip_forward=1</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>Linux</category>
-      </categories>
-      <tags>
-        <tag>Zerotier</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Cisco Nexus Telemetry监控的简单实现</title>
     <url>/posts/b86ffcc3.html</url>
     <content><![CDATA[<p>Telemetry是一种实时监控和收集网络设备状态数据的技术，它可以提供更精细、更准确的网络性能数据，以帮助网络管理员更好地管理和维护网络。为此记录一下简单的实现方式。</p>
@@ -981,5 +886,136 @@
         <tag>InfluxDB</tag>
         <tag>Telegraf</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>Zerotier自建moon教程</title>
+    <url>/posts/889fbe9b.html</url>
+    <content><![CDATA[<p>Zerotier官方服务器都在国外，使用起来特别卡，又想使用这种可以局域网直接访问私网地址的方式，因此考虑自建moon节点。</p>
+<span id="more"></span>
+
+<h2 id="VPS设置"><a href="#VPS设置" class="headerlink" title="VPS设置"></a>VPS设置</h2><ul>
+<li>安装zeroiter</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -s https://install.zerotier.com | sudo bash</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>启动服务、查看服务运行状态并设置开启自启</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl start zerotier-one</span><br><span class="line">systemctl status zerotier-one</span><br><span class="line">systemctl enable zerotier-one</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>加入zerotier网络</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli join zerotier网站中的ID</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>生成moon.json模板</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd /var/lib/zerotier-one/</span><br><span class="line"></span><br><span class="line">zerotier-idtool initmoon identity.public &gt; moon.json</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>修改moon.json配置文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vim moon.json</span><br><span class="line"></span><br><span class="line">找到以下字段 </span><br><span class="line">&quot;stableEndpoints&quot;: [ &quot;你的VPS公网地址/9993&quot; ]</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>生成签名文件</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-idtool genmoon moon.json</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>创建存放目录</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mkdir moons.d</span><br><span class="line">把签名文件移动至新建目录</span><br><span class="line">mv 000000xxxx.moon moons.d/</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>重启服务</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl restart zerotier-one</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: 防火墙需要放通TCP&#x2F;UDP的9993端口</p>
+</blockquote>
+<h2 id="客户端设置"><a href="#客户端设置" class="headerlink" title="客户端设置"></a>客户端设置</h2><ul>
+<li>Windows power shell管理员权限执行以下命令</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli.bat orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看是否成功</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli.bat listpeers</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Linux</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看是否成功</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli listpeers</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Tips: 加入成功的话会显示节点列表中有自己的VPS地址的moon节点</p>
+</blockquote>
+<h2 id="Openwrt"><a href="#Openwrt" class="headerlink" title="Openwrt"></a>Openwrt</h2><ul>
+<li>在zerotier页面开启，并打开NAT，命令行执行命令</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">zerotier-cli orbit xxxxxxxxxx xxxxxxxxxx</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>在VPS上添加openwrt路由器的私网路由,gw之后的地址为openwrt在zerotier中获得的地址。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">route add -net x.x.x.x/x gw x.x.x.x</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>VPS开启路由转发</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sysctl -w net.ipv4.ip_forward=1</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>Zerotier</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>为Netmiko添加新设备类型的指南</title>
+    <url>/posts/13b2a32b.html</url>
+    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>Netmiko 是一个流行的 Python 库，广泛用于通过 SSH 和 Telnet 自动化网络设备。它支持多种设备，包括 Cisco、Juniper、Arista 等。但在网络自动化的旅程中，你可能会遇到 Netmiko 尚未直接支持的设备。本文将引导你如何在 Netmiko 中添加对新平台的支持，以假想的迪普负载均衡设备为例。</p>
+<span id="more"></span>
+
+<h2 id="步骤概述"><a href="#步骤概述" class="headerlink" title="步骤概述"></a>步骤概述</h2><p>向 Netmiko 添加新平台支持主要包括以下步骤：</p>
+<ol>
+<li>创建平台实现文件和 <code>__init__.py</code> 文件。</li>
+<li>实现平台特定的连接类。</li>
+<li>在 <code>ssh_dispatcher.py</code> 中注册新平台。</li>
+<li>测试并验证新平台支持。</li>
+</ol>
+<h2 id="创建文件结构"><a href="#创建文件结构" class="headerlink" title="创建文件结构"></a>创建文件结构</h2><hr>
+<p>假设我们要添加的新设备类型为 “dptech”，首先在 <code>netmiko/dptech/</code> 下创建以下文件：</p>
+<ul>
+<li><code>dptech.py</code>：包含实现 dptech 设备连接逻辑的类。</li>
+<li><code>__init__.py</code>：使 DPtechADXSSH 类可以被外部引用。</li>
+</ul>
+<h3 id="实现-DPtechADXSSH-类"><a href="#实现-DPtechADXSSH-类" class="headerlink" title="实现 DPtechADXSSH 类"></a>实现 DPtechADXSSH 类</h3><p>在 <code>dptech.py</code> 中，我们继承 Netmiko 中最接近我们设备行为的基类。考虑到迪普负载均衡设备与 Cisco 设备类似，我们可以继承 <code>CiscoBaseConnection</code>：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 导入 Netmiko 中禁用 enable 模式的类和 Cisco 基础连接类</span></span><br><span class="line"><span class="keyword">from</span> netmiko.no_enable <span class="keyword">import</span> NoEnable  </span><br><span class="line"><span class="keyword">from</span> netmiko.cisco_base_connection <span class="keyword">import</span> CiscoBaseConnection  </span><br><span class="line">  </span><br><span class="line"><span class="comment"># 定义 DPtech ADX 设备的基础 SSH 连接类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">DPtechADXSSHBase</span>(NoEnable, CiscoBaseConnection):  </span><br><span class="line">    <span class="comment"># 会话准备方法，配置初始的会话设置</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">session_preparation</span>(<span class="params">self</span>) -&gt; <span class="literal">None</span>:  </span><br><span class="line">        <span class="string">&quot;&quot;&quot;在连接建立后准备会话。&quot;&quot;&quot;</span></span><br><span class="line">        self._test_channel_read(pattern=<span class="string">r&quot;[&gt;\]]&quot;</span>)  <span class="comment"># 测试通道是否可读，并等待提示符</span></span><br><span class="line">        self.set_base_prompt()  <span class="comment"># 设置基本提示符</span></span><br><span class="line">        self.disable_paging(command=<span class="string">&quot;terminal line 0&quot;</span>)  <span class="comment"># 禁用分页显示</span></span><br><span class="line">  </span><br><span class="line">    <span class="comment"># 进入配置模式</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">config_mode</span>(<span class="params">self, config_command: <span class="built_in">str</span> = <span class="string">&quot;config-mode&quot;</span>, pattern: <span class="built_in">str</span> = <span class="string">&quot;&quot;</span>, re_flags: <span class="built_in">int</span> = <span class="number">0</span>,</span>) -&gt; <span class="built_in">str</span>:  </span><br><span class="line">        <span class="string">&quot;&quot;&quot;进入配置模式。&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">super</span>().config_mode(config_command=config_command, pattern=pattern, re_flags=re_flags)  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># 检查是否处于配置模式</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">check_config_mode</span>(<span class="params">self, check_string: <span class="built_in">str</span> = <span class="string">&quot;]&quot;</span>, pattern: <span class="built_in">str</span> = <span class="string">&quot;&quot;</span>, force_regex: <span class="built_in">bool</span> = <span class="literal">False</span></span>) -&gt; <span class="built_in">bool</span>:  </span><br><span class="line">        <span class="string">&quot;&quot;&quot;检查设备是否处于配置模式。&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">super</span>().check_config_mode(check_string=check_string, pattern=pattern, force_regex=force_regex)  </span><br><span class="line">  </span><br><span class="line">    <span class="comment"># 保存配置</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">save_config</span>(<span class="params">self, cmd: <span class="built_in">str</span> = <span class="string">&quot;write file&quot;</span>, confirm: <span class="built_in">bool</span> = <span class="literal">False</span>, confirm_response: <span class="built_in">str</span> = <span class="string">&quot;&quot;</span></span>) -&gt; <span class="built_in">str</span>:  </span><br><span class="line">        <span class="string">&quot;&quot;&quot;使用 write file 命令保存配置。&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">super</span>().save_config(cmd=cmd, confirm=confirm, confirm_response=confirm_response)  </span><br><span class="line">  </span><br><span class="line"><span class="comment"># DPtech ADX 设备的 SSH 连接类，继承自 DPtechADXSSHBase</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">DPtechADXSSH</span>(<span class="title class_ inherited__">DPtechADXSSHBase</span>):  </span><br><span class="line">    <span class="keyword">pass</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>此代码定义了两个类：<code>DPtechADXSSHBase</code> 和 <code>DPtechADXSSH</code>。<code>DPtechADXSSHBase</code> 类实现了与 DPtech ADX 设备交互所需的基础方法，例如如何进入配置模式、如何检查是否处于配置模式以及如何保存配置。它继承了 <code>NoEnable</code> 和 <code>CiscoBaseConnection</code> 类，<code>NoEnable</code> 是用来指明该设备类型不需要进入特权模式（enable mode），而是直接使用特定的命令进入配置状态或执行其他操作。</p>
+<p><code>DPtechADXSSH</code> 类目前是一个空类，它继承自 <code>DPtechADXSSHBase</code>。这样的结构允许在 <code>DPtechADXSSHBase</code> 中实现所有基础功能，而 <code>DPtechADXSSH</code> 可以用来添加任何特定于 DPtech ADX 设备的额外功能或自定义行为。</p>
+<h3 id="配置-init-py"><a href="#配置-init-py" class="headerlink" title="配置 __init__.py"></a>配置 <code>__init__.py</code></h3><p>在 <code>__init__.py</code> 文件中，我们导入并暴露 DPtechADXSSH 类：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> netmiko.dptech.dptech <span class="keyword">import</span> DPtechADXSSH  </span><br><span class="line">  </span><br><span class="line">__all__ = [<span class="string">&quot;DPtechADXSSH&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<h2 id="在-ssh-dispatcher-py-中注册新平台"><a href="#在-ssh-dispatcher-py-中注册新平台" class="headerlink" title="在 ssh_dispatcher.py 中注册新平台"></a>在 <code>ssh_dispatcher.py</code> 中注册新平台</h2><p>修改 <code>ssh_dispatcher.py</code>，添加新平台到 CLASS_MAPPER 字典：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> netmiko.dptech <span class="keyword">import</span> DPtechADXSSH</span><br><span class="line"></span><br><span class="line">CLASS_MAPPER = &#123;</span><br><span class="line">    <span class="string">&quot;dptech_adx&quot;</span>: DPtechADXSSH,</span><br><span class="line">    <span class="comment"># 其他已有的映射</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="测试新平台支持"><a href="#测试新平台支持" class="headerlink" title="测试新平台支持"></a>测试新平台支持</h2><p>创建一个测试脚本来验证我们的 DPtechADXSSH 类是否按预期工作：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> netmiko <span class="keyword">import</span> ConnectHandler</span><br><span class="line"></span><br><span class="line">device = &#123;</span><br><span class="line">    <span class="string">&#x27;device_type&#x27;</span>: <span class="string">&#x27;dptechadx&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;host&#x27;</span>:   <span class="string">&#x27;your_device_ip&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;username&#x27;</span>: <span class="string">&#x27;your_username&#x27;</span>,</span><br><span class="line">    <span class="string">&#x27;password&#x27;</span>: <span class="string">&#x27;your_password&#x27;</span>,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">net_connect = ConnectHandler(**device)</span><br><span class="line">output = net_connect.send_command(<span class="string">&quot;show version&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(output)</span><br><span class="line">net_connect.disconnect()</span><br></pre></td></tr></table></figure>
+
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>通过上述步骤，我们演示了如何在 Netmiko 中添加对新平台的支持。这个过程需要对目标设备的行为有一定的了解，并可能需要根据实际设备调整代码。</p>
+]]></content>
   </entry>
 </search>
